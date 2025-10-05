@@ -2,14 +2,15 @@
 
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function LoginCard() {
+  const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check session on mount
     const init = async () => {
       const { data } = await supabase.auth.getSession()
       setEmail(data.session?.user?.email ?? null)
@@ -17,12 +18,13 @@ export default function LoginCard() {
     }
     init()
 
-    // Listen for auth state changes (e.g., after redirect)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setEmail(session?.user?.email ?? null)
+      const userEmail = session?.user?.email ?? null
+      setEmail(userEmail)
+      if (userEmail) router.replace('/chat') // redirect after login
     })
     return () => { sub.subscription.unsubscribe() }
-  }, [])
+  }, [router])
 
   const login = async () => {
     await supabase.auth.signInWithOAuth({
