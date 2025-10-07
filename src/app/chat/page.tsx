@@ -1,25 +1,56 @@
 'use client'
 
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from '@/hooks/useSession'
 import { supabase } from '@/lib/supabaseClient'
-import { useState } from 'react'
+import { useSession } from '@/hooks/useSession'
+
+interface Message {
+  sender: 'user' | 'bot'
+  text: string
+}
 
 export default function ChatPage() {
   const router = useRouter()
-  const { email, loading } = useSession(true)   // true → redirect if missing
-  const [question, setQuestion] = useState('')
-  const [answer, setAnswer] = useState<string | null>(null)
+  const { email, loading } = useSession(true)
+  const [messages, setMessages] = useState<Message[]>([
+    { sender: 'bot', text: '👋 Hello! I’m TrustAI. How can I help you with your financial questions today?' }
+  ])
+  const [input, setInput] = useState('')
+  const [thinking, setThinking] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const signOut = async () => {
     await supabase.auth.signOut()
     router.replace('/')
   }
 
-  const sendQuestion = async () => {
-    if (!question.trim()) return
-    // placeholder — later call FastAPI here
-    setAnswer('Your loan was denied due to your credit score and debt-to-income ratio.')
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, thinking])
+
+  const sendMessage = async () => {
+    const trimmed = input.trim()
+    if (!trimmed) return
+
+    // Add user message
+    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
+    setInput('')
+    setThinking(true)
+
+    // Simulate delay (later this will call FastAPI)
+    setTimeout(() => {
+      setThinking(false)
+      setMessages(prev => [
+        ...prev,
+        {
+          sender: 'bot',
+          text:
+            'Your loan was denied due to your credit score and debt-to-income ratio.\n\n' +
+            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)'
+        }
+      ])
+    }, 1800)
   }
 
   if (loading) {
@@ -31,66 +62,35 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="page-center">
-      <div className="card" style={{ width: 600 }}>
-        <h2 style={{ color: 'var(--brand)', marginTop: 0 }}>Welcome, {email}</h2>
-        <p style={{ color: '#555' }}>You are now logged in to the TrustAI Research Portal.</p>
-
-        <div style={{ marginTop: 24, textAlign: 'left' }}>
-          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600 }}>
-            Ask a financial question
-          </label>
-          <input
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="e.g., Why was my loan denied?"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: 8,
-              border: '1px solid var(--border)',
-              outline: 'none'
-            }}
-          />
-          <button
-            onClick={sendQuestion}
-            style={{
-              marginTop: 12,
-              backgroundColor: 'var(--brand)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '10px 16px',
-              cursor: 'pointer'
-            }}
-          >
-            Send
-          </button>
+    <main className="chat-container">
+      <header className="chat-header">
+        <h2>TrustAI Chatbot</h2>
+        <div className="user-info">
+          <span>{email}</span>
+          <button onClick={signOut}>Sign out</button>
         </div>
+      </header>
 
-        {answer && (
-          <div style={{ marginTop: 18, padding: 12, background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-            <strong>Answer</strong>
-            <div style={{ marginTop: 6 }}>{answer}</div>
+      <section className="chat-box">
+        {messages.map((msg, i) => (
+          <div key={i} className={`bubble ${msg.sender}`}>
+            {msg.text}
           </div>
-        )}
+        ))}
+        {thinking && <div className="bubble bot thinking">Thinking<span className="dots">...</span></div>}
+        <div ref={messagesEndRef} />
+      </section>
 
-        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={signOut}
-            style={{
-              backgroundColor: '#e53935',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              padding: '10px 16px',
-              cursor: 'pointer'
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
+      <footer className="input-bar">
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder="Ask a question about your loan, credit, or finances..."
+          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+        />
+        <button onClick={sendMessage}>Send</button>
+      </footer>
     </main>
   )
 }
