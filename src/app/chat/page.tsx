@@ -8,13 +8,22 @@ import { useSession } from '@/hooks/useSession'
 interface Message {
   sender: 'user' | 'bot'
   text: string
+  type?: 'text' | 'action'
 }
 
 export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'bot', text: '👋 Hello! I’m TrustAI. How can I help you with your financial questions today?' }
+    {
+      sender: 'bot',
+      text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.',
+    },
+    {
+      sender: 'bot',
+      text: 'Would you like to check your loan eligibility?',
+      type: 'action',
+    },
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
@@ -33,22 +42,21 @@ export default function ChatPage() {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    // Add user message
-    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
+    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
     setInput('')
     setThinking(true)
 
-    // Simulate delay (later this will call FastAPI)
+    // Temporary simulated response
     setTimeout(() => {
       setThinking(false)
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           sender: 'bot',
           text:
             'Your loan was denied due to your credit score and debt-to-income ratio.\n\n' +
-            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)'
-        }
+            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)',
+        },
       ])
     }, 1800)
   }
@@ -63,31 +71,53 @@ export default function ChatPage() {
 
   return (
     <main className="chat-container">
+      {/* Header */}
       <header className="chat-header">
         <h2>TrustAI Chatbot</h2>
         <div className="user-info">
           <span>{email}</span>
-          <button onClick={signOut}>Sign out</button>
+          <button onClick={signOut} className="danger">
+            Sign out
+          </button>
         </div>
       </header>
 
+      {/* Chat messages */}
       <section className="chat-box">
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender}`}>
             {msg.text}
+
+            {/* Special "Apply for Loan" action bubble */}
+            {msg.type === 'action' && (
+              <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                <button
+                  onClick={() => router.push('/loan-form')}
+                  className="button"
+                >
+                  Apply for a Loan
+                </button>
+              </div>
+            )}
           </div>
         ))}
-        {thinking && <div className="bubble bot thinking">Thinking<span className="dots">...</span></div>}
+
+        {thinking && (
+          <div className="bubble bot thinking">
+            Thinking<span className="dots">...</span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </section>
 
+      {/* Input bar */}
       <footer className="input-bar">
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about your loan, credit, or finances..."
-          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>Send</button>
       </footer>

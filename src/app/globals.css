@@ -12,16 +12,15 @@ html, body {
   margin: 0;
   padding: 0;
   background: var(--bg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
 }
 
-/* Centered layout (used in login) */
+/* Centered layout */
 .page-center {
-  min-height: 100vh;
   display: grid;
   place-items: center;
-  background: var(--bg);
+  min-height: 100vh;
 }
 
 /* ---------- Cards / Containers ---------- */
@@ -214,4 +213,82 @@ html, body {
 /* Hide dev indicator */
 .nextjs-portal {
   display: none !important;
+}
+
+/* ---------- Loan form container ---------- */
+.loan-form {
+  background: var(--card);
+  padding: 2rem;
+  border-radius: 16px;
+  width: 420px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+}
+
+.loan-form h1 {
+  color: var(--brand);
+  font-size: 1.6rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.loan-form label {
+  display: block;
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-top: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.loan-form select {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+.loan-form select:invalid {
+  color: var(--muted);
+}
+
+.loan-form input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.loan-form input::placeholder {
+  color: var(--muted);
+}
+
+/* Buttons */
+.button {
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button:hover { background: #3394ff; }
+
+.button.secondary {
+  background: var(--border);
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.2rem;
 }
