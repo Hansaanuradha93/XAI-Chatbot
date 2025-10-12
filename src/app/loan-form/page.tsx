@@ -15,6 +15,8 @@ export default function LoanFormPage() {
     cibil_score: ''
   })
 
+  const [loading, setLoading] = useState(false)
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({
@@ -26,7 +28,7 @@ export default function LoanFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Basic front-end validation
+    // ✅ Basic front-end validation
     const income = Number(form.income_annum)
     const loan = Number(form.loan_amount)
     const term = Number(form.loan_term)
@@ -47,8 +49,38 @@ export default function LoanFormPage() {
       return
     }
 
-    console.log('✅ Form Submitted:', form)
-    alert('Form submitted successfully! (Backend integration coming next)')
+    setLoading(true)
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          education: Number(form.education),
+          self_employed: Number(form.self_employed),
+          income_annum: Number(form.income_annum),
+          loan_amount: Number(form.loan_amount),
+          loan_term: Number(form.loan_term),
+          cibil_score: Number(form.cibil_score)
+        })
+      })
+
+      const data = await res.json()
+      console.log('✅ Backend response:', data)
+
+      if (data && data.prediction) {
+        // ✅ Save result in localStorage for chatbot to use
+        localStorage.setItem('loan_result', JSON.stringify(data))
+        router.push('/chat')
+      } else {
+        alert('Something went wrong while getting prediction.')
+      }
+    } catch (err) {
+      console.error('❌ API Error:', err)
+      alert('Error connecting to the backend API.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -56,7 +88,6 @@ export default function LoanFormPage() {
       <form className="loan-form" onSubmit={handleSubmit}>
         <h1>Loan Application</h1>
 
-        {/* Education */}
         <label>Education Level</label>
         <select
           name="education"
@@ -69,7 +100,6 @@ export default function LoanFormPage() {
           <option value="1">Not Graduate</option>
         </select>
 
-        {/* Self Employed */}
         <label>Self Employment Status</label>
         <select
           name="self_employed"
@@ -82,7 +112,6 @@ export default function LoanFormPage() {
           <option value="0">No</option>
         </select>
 
-        {/* Annual Income */}
         <label>Annual Income (LKR)</label>
         <input
           type="number"
@@ -93,7 +122,6 @@ export default function LoanFormPage() {
           required
         />
 
-        {/* Loan Amount */}
         <label>Requested Loan Amount (LKR)</label>
         <input
           type="number"
@@ -104,7 +132,6 @@ export default function LoanFormPage() {
           required
         />
 
-        {/* Loan Term */}
         <label>Repayment Duration (Months)</label>
         <input
           type="number"
@@ -116,7 +143,6 @@ export default function LoanFormPage() {
           required
         />
 
-        {/* CIBIL Score */}
         <label>Credit Score</label>
         <input
           type="number"
@@ -137,8 +163,8 @@ export default function LoanFormPage() {
             Back
           </button>
 
-          <button type="submit" className="button primary">
-            Submit
+          <button type="submit" className="button primary" disabled={loading}>
+            {loading ? 'Analyzing...' : 'Submit'}
           </button>
         </div>
       </form>

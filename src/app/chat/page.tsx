@@ -17,48 +17,85 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'bot',
-      text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.',
+      text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.'
     },
     {
       sender: 'bot',
       text: 'Would you like to check your loan eligibility?',
-      type: 'action',
-    },
+      type: 'action'
+    }
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // --- Sign out handler ---
   const signOut = async () => {
     await supabase.auth.signOut()
     router.replace('/')
   }
 
+  // --- Auto-scroll when new messages appear ---
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking])
 
+  // --- Check for saved loan result from /loan-form ---
+  useEffect(() => {
+    setTimeout(() => {
+      const saved = localStorage.getItem('loan_result')
+      console.log('🔍 Checking loan_result in localStorage:', saved)
+
+      if (saved) {
+        const result = JSON.parse(saved)
+        localStorage.removeItem('loan_result')
+
+        // Format explanation text
+        let explanationText = ''
+        if (result.explanation && typeof result.explanation === 'object') {
+          explanationText = Object.entries(result.explanation)
+            .map(([feature, impact]) => `${feature}: ${impact}`)
+            .join('\n')
+        }
+
+        const messageText =
+          `💡 Loan Decision: ${result.prediction}\n\n` +
+          (explanationText
+            ? `Explanation:\n${explanationText}`
+            : 'No explanation available.')
+
+        console.log('✅ Showing result message:', messageText)
+
+        setMessages(prev => [
+          ...prev,
+          { sender: 'bot', text: messageText }
+        ])
+      }
+    }, 500)
+  }, [])
+
+  // --- Send normal chat messages (mock logic) ---
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
+    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
     setInput('')
     setThinking(true)
 
-    // Temporary simulated response
+    // Temporary AI simulation
     setTimeout(() => {
       setThinking(false)
-      setMessages((prev) => [
+      setMessages(prev => [
         ...prev,
         {
           sender: 'bot',
           text:
             'Your loan was denied due to your credit score and debt-to-income ratio.\n\n' +
-            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)',
-        },
+            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)'
+        }
       ])
-    }, 1800)
+    }, 1500)
   }
 
   if (loading) {
@@ -71,7 +108,7 @@ export default function ChatPage() {
 
   return (
     <main className="chat-container">
-      {/* Header */}
+      {/* --- Header --- */}
       <header className="chat-header">
         <h2>TrustAI Chatbot</h2>
         <div className="user-info">
@@ -82,13 +119,13 @@ export default function ChatPage() {
         </div>
       </header>
 
-      {/* Chat messages */}
+      {/* --- Chat Messages --- */}
       <section className="chat-box">
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender}`}>
             {msg.text}
 
-            {/* Special "Apply for Loan" action bubble */}
+            {/* Action bubble (loan form button) */}
             {msg.type === 'action' && (
               <div style={{ marginTop: '10px', textAlign: 'center' }}>
                 <button
@@ -110,14 +147,14 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </section>
 
-      {/* Input bar */}
+      {/* --- Input Bar --- */}
       <footer className="input-bar">
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={e => setInput(e.target.value)}
           placeholder="Ask a question about your loan, credit, or finances..."
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyDown={e => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>Send</button>
       </footer>
