@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
+import { ADMIN_EMAILS } from '@/lib/adminConfig' // 👈 import admin emails
 
 interface Message {
   sender: 'user' | 'bot'
@@ -22,13 +23,12 @@ export default function ChatPage() {
 
   const [messages, setMessages] = useState<Message[]>([
     { sender: 'bot', text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.' },
-    { sender: 'bot', text: 'Would you like to check your loan eligibility?', type: 'action' }
+    { sender: 'bot', text: 'Would you like to check your loan eligibility?', type: 'action' },
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // --- Rating & Feedback state ---
   const [lastResult, setLastResult] = useState<LoanResult | null>(null)
   const [ratingPending, setRatingPending] = useState(false)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
@@ -46,7 +46,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking, ratingPending, feedbackPending])
 
-  // --- Load last loan result ---
+  // Load loan result if available
   useEffect(() => {
     const saved = localStorage.getItem('loan_result')
     if (saved) {
@@ -65,7 +65,7 @@ export default function ChatPage() {
         `💡 Loan Decision: ${result.prediction}\n\n` +
         (explanationText ? `Explanation:\n${explanationText}` : 'No explanation available.')
 
-      setMessages(prev => [...prev, { sender: 'bot', text: messageText }])
+      setMessages((prev) => [...prev, { sender: 'bot', text: messageText }])
       setLastResult(result)
       setRatingPending(true)
     }
@@ -75,31 +75,30 @@ export default function ChatPage() {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
+    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
     setInput('')
     setThinking(true)
 
     setTimeout(() => {
       setThinking(false)
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           sender: 'bot',
           text:
             'Your loan was denied due to your credit score and debt-to-income ratio.\n\n' +
-            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)'
-        }
+            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)',
+        },
       ])
     }, 1500)
   }
 
-  // --- Rating handler ---
   const handleRating = async (score: number) => {
     if (!email || !lastResult) return
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-    const variant = 'xai' // change to 'baseline' for no-explanation version
+    const variant = 'xai'
 
     const { data, error } = await supabase
       .from('trust_ratings')
@@ -108,7 +107,7 @@ export default function ChatPage() {
         variant,
         prediction: lastResult.prediction,
         explanation_json: lastResult.explanation ?? null,
-        trust_score: score
+        trust_score: score,
       })
       .select('id')
       .single()
@@ -126,14 +125,13 @@ export default function ChatPage() {
     setFeedbackPending(true)
     localStorage.setItem('rating_id', data.id)
 
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
       { sender: 'bot', text: `✅ Thanks! Your trust rating (${score}/5) was recorded.` },
-      { sender: 'bot', text: 'Would you like to share why you rated it this way?' }
+      { sender: 'bot', text: 'Would you like to share why you rated it this way?' },
     ])
   }
 
-  // --- Feedback handler ---
   const submitFeedback = async () => {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
@@ -141,10 +139,7 @@ export default function ChatPage() {
     const ratingId = localStorage.getItem('rating_id')
     if (!ratingId) return
 
-    const { error } = await supabase
-      .from('trust_ratings')
-      .update({ comment: feedback })
-      .eq('id', ratingId)
+    const { error } = await supabase.from('trust_ratings').update({ comment: feedback }).eq('id', ratingId)
 
     setFeedbackSubmitting(false)
     setFeedbackPending(false)
@@ -156,10 +151,10 @@ export default function ChatPage() {
       return
     }
 
-    setMessages(prev => [
+    setMessages((prev) => [
       ...prev,
       { sender: 'user', text: feedback },
-      { sender: 'bot', text: '🙏 Thank you for sharing your feedback!' }
+      { sender: 'bot', text: '🙏 Thank you for sharing your feedback!' },
     ])
     setFeedback('')
   }
@@ -178,7 +173,17 @@ export default function ChatPage() {
         <h2>TrustAI Chatbot</h2>
         <div className="user-info">
           <span>{email}</span>
-          <button onClick={signOut} className="danger">Sign out</button>
+
+          {/* ✅ Only show for admin users */}
+          {ADMIN_EMAILS.includes(email || '') && (
+            <button onClick={() => router.push('/admin')} className="admin-btn">
+              Admin
+            </button>
+          )}
+
+          <button onClick={signOut} className="danger">
+            Sign out
+          </button>
         </div>
       </header>
 
@@ -200,13 +205,8 @@ export default function ChatPage() {
           <div className="bubble bot">
             <b>On a scale of 1–5, how much do you trust this decision?</b>
             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-              {[1, 2, 3, 4, 5].map(n => (
-                <button
-                  key={n}
-                  className="button"
-                  disabled={ratingSubmitting}
-                  onClick={() => handleRating(n)}
-                >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button key={n} className="button" disabled={ratingSubmitting} onClick={() => handleRating(n)}>
                   {n}
                 </button>
               ))}
@@ -219,7 +219,7 @@ export default function ChatPage() {
             <b>Optional Feedback</b>
             <textarea
               value={feedback}
-              onChange={e => setFeedback(e.target.value)}
+              onChange={(e) => setFeedback(e.target.value)}
               placeholder="Share your thoughts..."
               rows={3}
               style={{
@@ -229,15 +229,10 @@ export default function ChatPage() {
                 border: '1px solid var(--border)',
                 background: '#0f1115',
                 color: 'var(--text)',
-                padding: '6px'
+                padding: '6px',
               }}
             />
-            <button
-              className="button"
-              style={{ marginTop: '6px' }}
-              disabled={feedbackSubmitting}
-              onClick={submitFeedback}
-            >
+            <button className="button" style={{ marginTop: '6px' }} disabled={feedbackSubmitting} onClick={submitFeedback}>
               Submit Feedback
             </button>
           </div>
@@ -250,9 +245,9 @@ export default function ChatPage() {
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about your loan, credit, or finances..."
-          onKeyDown={e => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>Send</button>
       </footer>
