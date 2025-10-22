@@ -71,26 +71,45 @@ export default function ChatPage() {
     }
   }, [])
 
+  // FQA Answers
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
+    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
     setInput('')
     setThinking(true)
 
-    setTimeout(() => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/faq_answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: trimmed,
+          user_email: email || 'anonymous'
+        }),
+      })
+
+      const data = await res.json()
       setThinking(false)
-      setMessages((prev) => [
+
+      if (data.answer) {
+        // ✅ Show only the answer text
+        setMessages(prev => [...prev, { sender: 'bot', text: data.answer }])
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { sender: 'bot', text: '😕 Sorry, I couldn’t find an answer for that question.' }
+        ])
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      setThinking(false)
+      setMessages(prev => [
         ...prev,
-        {
-          sender: 'bot',
-          text:
-            'Your loan was denied due to your credit score and debt-to-income ratio.\n\n' +
-            'Credit Score: 620 (Threshold: 700)\nDTI: 45% (Max: 35%)',
-        },
+        { sender: 'bot', text: '⚠️ Error contacting the backend service.' }
       ])
-    }, 1500)
+    }
   }
 
   const handleRating = async (score: number) => {
