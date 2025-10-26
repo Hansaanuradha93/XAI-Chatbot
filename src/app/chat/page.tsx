@@ -70,6 +70,7 @@ export default function ChatPage() {
         const pastMessages = data.map((m) => ({
           sender: m.sender as 'user' | 'bot',
           text: m.message,
+          type: 'text',
         }))
 
         // ✅ Always keep greeting + loan CTA at the top
@@ -81,7 +82,7 @@ export default function ChatPage() {
     loadChatHistory()
   }, [email])
 
-  // 🔹 Helper to save each message to Supabase
+  // 🔹 Save each message to Supabase
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
     if (!email) return
     const { error } = await supabase
@@ -89,33 +90,6 @@ export default function ChatPage() {
       .insert({ user_email: email, sender, message: text })
     if (error) console.error('Error saving message:', error)
   }
-
-  // Load stored loan results if any
-  useEffect(() => {
-    const saved = localStorage.getItem('loan_result')
-    if (saved) {
-      const result: LoanResult = JSON.parse(saved)
-      localStorage.removeItem('loan_result')
-
-      let explanationText = ''
-      if (result.explanation && typeof result.explanation === 'object') {
-        const entries = Object.entries(result.explanation)
-        if (entries.length > 0) {
-          explanationText = entries.map(([f, v]) => `${f}: ${v}`).join('\n')
-        }
-      }
-
-      const messageText =
-        `💡 Loan Decision: ${result.prediction}\n\n` +
-        (explanationText ? `Explanation:\n${explanationText}` : 'No explanation available.')
-
-      setMessages((prev) => [...prev, { sender: 'bot', text: messageText }])
-      saveMessage('bot', messageText)
-      setLastResult(result)
-      setContext('loan')
-      setRatingPending(true)
-    }
-  }, [])
 
   // --- FAQ Question ---
   const sendMessage = async () => {
@@ -141,8 +115,9 @@ export default function ChatPage() {
       setThinking(false)
 
       if (data.answer) {
-        setMessages((prev) => [...prev, { sender: 'bot', text: data.answer }])
-        saveMessage('bot', data.answer)
+        const botMsg = data.answer
+        setMessages((prev) => [...prev, { sender: 'bot', text: botMsg }])
+        saveMessage('bot', botMsg)
         setContext('faq')
         setRatingPending(true)
       } else {
@@ -165,7 +140,6 @@ export default function ChatPage() {
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-
     const variant = context === 'loan' ? 'xai' : 'faq'
 
     const { data, error } = await supabase
@@ -192,7 +166,7 @@ export default function ChatPage() {
     setRatingGiven(score)
     setRatingPending(false)
     setFeedbackPending(true)
-    localStorage.setItem('rating_id', data.id)
+    const ratingId = data.id
 
     const botMsg1 = `✅ Thanks! Your trust rating (${score}/5) was recorded.`
     const botMsg2 = 'Would you like to share why you rated it this way?'
@@ -206,14 +180,28 @@ export default function ChatPage() {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
 
-    const ratingId = localStorage.getItem('rating_id')
-    if (!ratingId) return
+    // Get most recent rating entry for this user
+    const { data: latestRating } = await supabase
+      .from('trust_ratings')
+      .select('id')
+      .eq('user_email', email)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    const { error } = await supabase.from('trust_ratings').update({ comment: feedback }).eq('id', ratingId)
+    if (!latestRating) {
+      alert('No rating record found to attach feedback.')
+      setFeedbackSubmitting(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from('trust_ratings')
+      .update({ comment: feedback })
+      .eq('id', latestRating.id)
 
     setFeedbackSubmitting(false)
     setFeedbackPending(false)
-    localStorage.removeItem('rating_id')
 
     if (error) {
       console.error('Feedback update error:', error)
@@ -221,13 +209,14 @@ export default function ChatPage() {
       return
     }
 
+    const thankMsg = '🙏 Thank you for sharing your feedback!'
     setMessages((prev) => [
       ...prev,
       { sender: 'user', text: feedback },
-      { sender: 'bot', text: '🙏 Thank you for sharing your feedback!' }
+      { sender: 'bot', text: thankMsg },
     ])
     saveMessage('user', feedback)
-    saveMessage('bot', '🙏 Thank you for sharing your feedback!')
+    saveMessage('bot', thankMsg)
     setFeedback('')
   }
 
@@ -258,7 +247,7 @@ export default function ChatPage() {
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender}`}>
             {msg.text}
-            {msg.type === 'action' && (
+            {msg.type === 'action' && i < 3 && (
               <div style={{ marginTop: '10px', textAlign: 'center' }}>
                 <button onClick={() => router.push('/loan-form')} className="button">
                   Apply for a Loan
@@ -306,7 +295,12 @@ export default function ChatPage() {
                 padding: '6px',
               }}
             />
-            <button className="button" style={{ marginTop: '6px' }} disabled={feedbackSubmitting} onClick={submitFeedback}>
+            <button
+              className="button"
+              style={{ marginTop: '6px' }}
+              disabled={feedbackSubmitting}
+              onClick={submitFeedback}
+            >
               Submit Feedback
             </button>
           </div>
