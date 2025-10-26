@@ -23,10 +23,12 @@ export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
-  const [messages, setMessages] = useState<Message[]>([
+  const initialGreeting: Message[] = [
     { sender: 'bot', text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.' },
     { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.', type: 'action' },
-  ])
+  ]
+
+  const [messages, setMessages] = useState<Message[]>(initialGreeting)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -69,7 +71,11 @@ export default function ChatPage() {
           sender: m.sender as 'user' | 'bot',
           text: m.message,
         }))
-        setMessages(pastMessages)
+
+        // ✅ Always keep greeting + loan CTA at the top
+        setMessages([...initialGreeting, ...pastMessages])
+      } else {
+        setMessages(initialGreeting)
       }
     }
     loadChatHistory()
@@ -135,7 +141,6 @@ export default function ChatPage() {
       setThinking(false)
 
       if (data.answer) {
-        // Show answer only
         setMessages((prev) => [...prev, { sender: 'bot', text: data.answer }])
         saveMessage('bot', data.answer)
         setContext('faq')
@@ -161,7 +166,6 @@ export default function ChatPage() {
 
     setRatingSubmitting(true)
 
-    // Determine variant based on context
     const variant = context === 'loan' ? 'xai' : 'faq'
 
     const { data, error } = await supabase
@@ -246,9 +250,7 @@ export default function ChatPage() {
               Admin
             </button>
           )}
-          <button onClick={signOut} className="danger">
-            Sign out
-          </button>
+          <button onClick={signOut} className="danger">Sign out</button>
         </div>
       </header>
 
@@ -266,7 +268,7 @@ export default function ChatPage() {
           </div>
         ))}
 
-        {/* 🔹 Show rating after each response */}
+        {/* 🔹 Rating Prompt */}
         {ratingPending && (
           <div className="bubble bot">
             <b>On a scale of 1–5, how much do you trust this answer?</b>
