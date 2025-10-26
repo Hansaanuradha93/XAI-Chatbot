@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
-import { ADMIN_EMAILS } from '@/lib/adminConfig' // 👈 import admin emails
+import { ADMIN_EMAILS } from '@/lib/adminConfig'
 
 interface Message {
   sender: 'user' | 'bot'
@@ -17,25 +17,28 @@ type LoanResult = {
   explanation?: Record<string, number> | { error?: string }
 }
 
+type ChatContext = 'loan' | 'faq' | null
+
 export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
   const [messages, setMessages] = useState<Message[]>([
     { sender: 'bot', text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.' },
-    { sender: 'bot', text: 'Would you like to check your loan eligibility?', type: 'action' },
+    { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.', type: 'action' },
   ])
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const [lastResult, setLastResult] = useState<LoanResult | null>(null)
+  const [context, setContext] = useState<ChatContext>(null)
   const [ratingPending, setRatingPending] = useState(false)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
-  const [ratingGiven, setRatingGiven] = useState<number | null>(null)
   const [feedbackPending, setFeedbackPending] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -46,7 +49,42 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking, ratingPending, feedbackPending])
 
-  // Load loan result if available
+  // 🔹 Load chat history from Supabase when user logs in
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (!email) return
+      const { data, error } = await supabase
+        .from('chat_history')
+        .select('sender, message')
+        .eq('user_email', email)
+        .order('timestamp', { ascending: true })
+
+      if (error) {
+        console.error('Error loading chat history:', error)
+        return
+      }
+
+      if (data && data.length > 0) {
+        const pastMessages = data.map((m) => ({
+          sender: m.sender as 'user' | 'bot',
+          text: m.message,
+        }))
+        setMessages(pastMessages)
+      }
+    }
+    loadChatHistory()
+  }, [email])
+
+  // 🔹 Helper to save each message to Supabase
+  const saveMessage = async (sender: 'user' | 'bot', text: string) => {
+    if (!email) return
+    const { error } = await supabase
+      .from('chat_history')
+      .insert({ user_email: email, sender, message: text })
+    if (error) console.error('Error saving message:', error)
+  }
+
+  // Load stored loan results if any
   useEffect(() => {
     const saved = localStorage.getItem('loan_result')
     if (saved) {
@@ -66,17 +104,20 @@ export default function ChatPage() {
         (explanationText ? `Explanation:\n${explanationText}` : 'No explanation available.')
 
       setMessages((prev) => [...prev, { sender: 'bot', text: messageText }])
+      saveMessage('bot', messageText)
       setLastResult(result)
+      setContext('loan')
       setRatingPending(true)
     }
   }, [])
 
-  // FQA Answers
+  // --- FAQ Question ---
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    setMessages(prev => [...prev, { sender: 'user', text: trimmed }])
+    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
+    saveMessage('user', trimmed)
     setInput('')
     setThinking(true)
 
@@ -86,7 +127,7 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: trimmed,
-          user_email: email || 'anonymous'
+          user_email: email || 'anonymous',
         }),
       })
 
@@ -94,39 +135,44 @@ export default function ChatPage() {
       setThinking(false)
 
       if (data.answer) {
-        // ✅ Show only the answer text
-        setMessages(prev => [...prev, { sender: 'bot', text: data.answer }])
+        // Show answer only
+        setMessages((prev) => [...prev, { sender: 'bot', text: data.answer }])
+        saveMessage('bot', data.answer)
+        setContext('faq')
+        setRatingPending(true)
       } else {
-        setMessages(prev => [
-          ...prev,
-          { sender: 'bot', text: '😕 Sorry, I couldn’t find an answer for that question.' }
-        ])
+        const msg = '😕 Sorry, I couldn’t find an answer for that question.'
+        setMessages((prev) => [...prev, { sender: 'bot', text: msg }])
+        saveMessage('bot', msg)
       }
     } catch (error) {
       console.error('Error:', error)
       setThinking(false)
-      setMessages(prev => [
-        ...prev,
-        { sender: 'bot', text: '⚠️ Error contacting the backend service.' }
-      ])
+      const errMsg = '⚠️ Error contacting the backend service.'
+      setMessages((prev) => [...prev, { sender: 'bot', text: errMsg }])
+      saveMessage('bot', errMsg)
     }
   }
 
+  // --- Handle Trust Rating ---
   const handleRating = async (score: number) => {
-    if (!email || !lastResult) return
+    if (!email) return
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-    const variant = 'xai'
+
+    // Determine variant based on context
+    const variant = context === 'loan' ? 'xai' : 'faq'
 
     const { data, error } = await supabase
       .from('trust_ratings')
       .insert({
         user_email: email,
         variant,
-        prediction: lastResult.prediction,
-        explanation_json: lastResult.explanation ?? null,
+        prediction: lastResult?.prediction ?? null,
+        explanation_json: lastResult?.explanation ?? null,
         trust_score: score,
+        comment: null,
       })
       .select('id')
       .single()
@@ -134,8 +180,8 @@ export default function ChatPage() {
     setRatingSubmitting(false)
 
     if (error || !data) {
-      console.error('Insert error:', error)
-      alert('Failed to save rating.')
+      console.error('❌ Supabase insert failed:', { error, data, variant, email, score, context })
+      alert(`Failed to save rating: ${error?.message || 'unknown error'}`)
       return
     }
 
@@ -144,13 +190,14 @@ export default function ChatPage() {
     setFeedbackPending(true)
     localStorage.setItem('rating_id', data.id)
 
-    setMessages((prev) => [
-      ...prev,
-      { sender: 'bot', text: `✅ Thanks! Your trust rating (${score}/5) was recorded.` },
-      { sender: 'bot', text: 'Would you like to share why you rated it this way?' },
-    ])
+    const botMsg1 = `✅ Thanks! Your trust rating (${score}/5) was recorded.`
+    const botMsg2 = 'Would you like to share why you rated it this way?'
+    setMessages((prev) => [...prev, { sender: 'bot', text: botMsg1 }, { sender: 'bot', text: botMsg2 }])
+    saveMessage('bot', botMsg1)
+    saveMessage('bot', botMsg2)
   }
 
+  // --- Handle Feedback ---
   const submitFeedback = async () => {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
@@ -173,8 +220,10 @@ export default function ChatPage() {
     setMessages((prev) => [
       ...prev,
       { sender: 'user', text: feedback },
-      { sender: 'bot', text: '🙏 Thank you for sharing your feedback!' },
+      { sender: 'bot', text: '🙏 Thank you for sharing your feedback!' }
     ])
+    saveMessage('user', feedback)
+    saveMessage('bot', '🙏 Thank you for sharing your feedback!')
     setFeedback('')
   }
 
@@ -192,14 +241,11 @@ export default function ChatPage() {
         <h2>TrustAI Chatbot</h2>
         <div className="user-info">
           <span>{email}</span>
-
-          {/* ✅ Only show for admin users */}
           {ADMIN_EMAILS.includes(email || '') && (
             <button onClick={() => router.push('/admin')} className="admin-btn">
               Admin
             </button>
           )}
-
           <button onClick={signOut} className="danger">
             Sign out
           </button>
@@ -220,12 +266,18 @@ export default function ChatPage() {
           </div>
         ))}
 
+        {/* 🔹 Show rating after each response */}
         {ratingPending && (
           <div className="bubble bot">
-            <b>On a scale of 1–5, how much do you trust this decision?</b>
+            <b>On a scale of 1–5, how much do you trust this answer?</b>
             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} className="button" disabled={ratingSubmitting} onClick={() => handleRating(n)}>
+                <button
+                  key={n}
+                  className="button"
+                  disabled={ratingSubmitting}
+                  onClick={() => handleRating(n)}
+                >
                   {n}
                 </button>
               ))}
@@ -233,6 +285,7 @@ export default function ChatPage() {
           </div>
         )}
 
+        {/* 🔹 Feedback Prompt */}
         {feedbackPending && (
           <div className="bubble bot">
             <b>Optional Feedback</b>
@@ -260,12 +313,13 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </section>
 
+      {/* 🔹 Input Bar */}
       <footer className="input-bar">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question about your loan, credit, or finances..."
+          placeholder="Ask a question or type 'Apply for a loan'..."
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>Send</button>
