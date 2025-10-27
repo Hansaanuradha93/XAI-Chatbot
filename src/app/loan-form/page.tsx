@@ -52,7 +52,9 @@ export default function LoanFormPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/predict', {
+      const mode = (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai';
+
+      const res = await fetch(`http://127.0.0.1:8000/predict?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,8 +64,8 @@ export default function LoanFormPage() {
           loan_amount: loan,
           loan_term: term,
           cibil_score: score
-        })
       })
+    })
 
       if (!res.ok) throw new Error(`Backend returned ${res.status}`)
       const data = await res.json()

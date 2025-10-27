@@ -42,6 +42,17 @@ export default function ChatPage() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
+  // Mode toggle (XAI or Baseline)
+  const [mode, setMode] = useState<'xai' | 'baseline'>(
+    (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+  )
+
+  const toggleMode = () => {
+    const newMode = mode === 'xai' ? 'baseline' : 'xai'
+    setMode(newMode)
+    localStorage.setItem('chat_mode', newMode)
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     router.replace('/')
@@ -72,7 +83,6 @@ export default function ChatPage() {
           text: m.message,
           type: 'text',
         }))
-
         // ✅ Always keep greeting + loan CTA at the top
         setMessages([...initialGreeting, ...pastMessages])
       } else {
@@ -85,9 +95,12 @@ export default function ChatPage() {
   // 🔹 Save each message to Supabase
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
     if (!email) return
-    const { error } = await supabase
-      .from('chat_history')
-      .insert({ user_email: email, sender, message: text })
+    const { error } = await supabase.from('chat_history').insert({
+      user_email: email,
+      sender,
+      message: text,
+      variant: mode,
+    })
     if (error) console.error('Error saving message:', error)
   }
 
@@ -140,7 +153,7 @@ export default function ChatPage() {
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-    const variant = context === 'loan' ? 'xai' : 'faq'
+    const variant = context === 'loan' ? mode : 'faq' // ✅ Use active mode for loan
 
     const { data, error } = await supabase
       .from('trust_ratings')
@@ -166,7 +179,6 @@ export default function ChatPage() {
     setRatingGiven(score)
     setRatingPending(false)
     setFeedbackPending(true)
-    const ratingId = data.id
 
     const botMsg1 = `✅ Thanks! Your trust rating (${score}/5) was recorded.`
     const botMsg2 = 'Would you like to share why you rated it this way?'
@@ -180,7 +192,6 @@ export default function ChatPage() {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
 
-    // Get most recent rating entry for this user
     const { data: latestRating } = await supabase
       .from('trust_ratings')
       .select('id')
@@ -195,10 +206,7 @@ export default function ChatPage() {
       return
     }
 
-    const { error } = await supabase
-      .from('trust_ratings')
-      .update({ comment: feedback })
-      .eq('id', latestRating.id)
+    const { error } = await supabase.from('trust_ratings').update({ comment: feedback }).eq('id', latestRating.id)
 
     setFeedbackSubmitting(false)
     setFeedbackPending(false)
@@ -234,12 +242,22 @@ export default function ChatPage() {
         <h2>TrustAI Chatbot</h2>
         <div className="user-info">
           <span>{email}</span>
+
+          {/* Only Admin sees mode toggle */}
           {ADMIN_EMAILS.includes(email || '') && (
-            <button onClick={() => router.push('/admin')} className="admin-btn">
-              Admin
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button onClick={toggleMode} className="button small">
+                Mode: {mode === 'xai' ? 'XAI' : 'Baseline'}
+              </button>
+              <button onClick={() => router.push('/admin')} className="admin-btn">
+                Admin
+              </button>
+            </div>
           )}
-          <button onClick={signOut} className="danger">Sign out</button>
+
+          <button onClick={signOut} className="danger">
+            Sign out
+          </button>
         </div>
       </header>
 
