@@ -63,34 +63,49 @@ export default function ChatPage() {
   }, [messages, thinking, ratingPending, feedbackPending])
 
   // 🔹 Load chat history from Supabase when user logs in
-  useEffect(() => {
-    const loadChatHistory = async () => {
-      if (!email) return
-      const { data, error } = await supabase
-        .from('chat_history')
-        .select('sender, message')
-        .eq('user_email', email)
-        .order('timestamp', { ascending: true })
+useEffect(() => {
+  const loadChatHistory = async () => {
+    if (!email) return
+    const { data, error } = await supabase
+      .from('chat_history')
+      .select('sender, message')
+      .eq('user_email', email)
+      .order('timestamp', { ascending: true })
 
-      if (error) {
-        console.error('Error loading chat history:', error)
-        return
-      }
-
-      if (data && data.length > 0) {
-        const pastMessages = data.map((m) => ({
-          sender: m.sender as 'user' | 'bot',
-          text: m.message,
-          type: 'text',
-        }))
-        // ✅ Always keep greeting + loan CTA at the top
-        setMessages([...initialGreeting, ...pastMessages])
-      } else {
-        setMessages(initialGreeting)
-      }
+    if (error) {
+      console.error('Error loading chat history:', error)
+      return
     }
-    loadChatHistory()
-  }, [email])
+
+    if (data && data.length > 0) {
+      const pastMessages = data.map((m) => ({
+        sender: m.sender as 'user' | 'bot',
+        text: m.message,
+        type: 'text',
+      }))
+
+      // ✅ Always keep greeting + loan CTA at the top
+      const combined = [...initialGreeting, ...pastMessages]
+      setMessages(combined)
+
+      // 🔍 Detect if latest message is a loan decision to trigger rating
+      const lastMsg = combined[combined.length - 1]
+      if (lastMsg && lastMsg.sender === 'bot' && lastMsg.text.startsWith('💡 Loan Decision')) {
+        console.log('📊 Detected loan decision message — enabling rating prompt.')
+        setContext('loan')
+        setRatingPending(true)
+        setLastResult({
+          prediction: lastMsg.text.includes('Approved') ? 'Approved' : 'Rejected',
+          explanation: lastMsg.text.includes('Explanation:') ? {} : null,
+        })
+      }
+    } else {
+      setMessages(initialGreeting)
+    }
+  }
+
+  loadChatHistory()
+}, [email])
 
   // 🔹 Save each message to Supabase
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
