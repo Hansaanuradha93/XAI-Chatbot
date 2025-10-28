@@ -280,13 +280,6 @@ useEffect(() => {
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender}`}>
             {msg.text}
-            {msg.type === 'action' && i < 3 && (
-              <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                <button onClick={() => router.push('/loan-form')} className="button">
-                  Apply for a Loan
-                </button>
-              </div>
-            )}
           </div>
         ))}
 
@@ -366,6 +359,28 @@ useEffect(() => {
         />
         <button onClick={sendMessage}>Send</button>
       </footer>
+
+      {/* 🔹 Floating Apply for Loan Button */}
+      {email && (
+        <button
+          onClick={() => router.push('/loan-form')}
+          className="button primary"
+          style={{
+            position: 'fixed',
+            bottom: '90px',
+            right: '30px',
+            borderRadius: '50px',
+            padding: '10px 18px',
+            fontWeight: 500,
+            background: 'linear-gradient(90deg, #0072ff, #00c6ff)',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+            zIndex: 1000,
+          }}
+        >
+          💰 Apply for a Loan
+        </button>
+      )}
     </main>
   )
 }
