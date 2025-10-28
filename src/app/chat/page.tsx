@@ -326,19 +326,32 @@ useEffect(() => {
                 background: '#0f1115',
                 color: 'var(--text)',
                 padding: '6px',
-              }}
-            />
-            <button
-              className="button"
-              style={{ marginTop: '6px' }}
-              disabled={feedbackSubmitting}
-              onClick={submitFeedback}
-            >
-              Submit Feedback
-            </button>
-          </div>
-        )}
-
+          }}
+        />
+        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+          <button
+          className="button"
+          disabled={feedbackSubmitting}
+          onClick={submitFeedback}
+        >
+          Submit Feedback
+        </button>
+        <button
+          className="button secondary"
+            onClick={() => {
+            // allow skipping feedback
+            setFeedbackPending(false)
+            setFeedback('')
+              const skipMsg = '👍 No problem! Feedback skipped.'
+              setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
+              saveMessage('bot', skipMsg)
+            }}
+          >
+            Skip
+          </button>
+        </div>
+      </div>
+    )}
         <div ref={messagesEndRef} />
       </section>
 
