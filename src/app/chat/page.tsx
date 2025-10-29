@@ -23,8 +23,9 @@ export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
+  // ✅ Clean greeting — no emojis
   const initialGreeting: Message[] = [
-    { sender: 'bot', text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.' },
+    { sender: 'bot', text: 'Hello! I’m TrustAI — your personal AI loan advisor.' },
     { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.' },
   ]
 
@@ -61,7 +62,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, thinking, ratingPending, feedbackPending])
 
-  // 🔹 Load chat history from Supabase when user logs in
+  // 🔹 Load chat history from Supabase
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!email) return
@@ -84,7 +85,7 @@ export default function ChatPage() {
         setMessages([...initialGreeting, ...pastMessages])
 
         const last = pastMessages[pastMessages.length - 1]
-        if (last && last.text.startsWith('💡 Loan Decision')) {
+        if (last && last.text.startsWith('Loan Decision')) {
           setContext('loan')
           setRatingPending(true)
         }
@@ -95,7 +96,7 @@ export default function ChatPage() {
     loadChatHistory()
   }, [email])
 
-  // 🔹 Save each message to Supabase
+  // 🔹 Save message
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
     if (!email) return
     const { error } = await supabase.from('chat_history').insert({
@@ -107,7 +108,7 @@ export default function ChatPage() {
     if (error) console.error('Error saving message:', error)
   }
 
-  // --- FAQ Question ---
+  // --- FAQ Message ---
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
@@ -137,20 +138,20 @@ export default function ChatPage() {
         setContext('faq')
         setRatingPending(true)
       } else {
-        const msg = '😕 Sorry, I couldn’t find an answer for that question.'
+        const msg = 'Sorry, I couldn’t find an answer for that question.'
         setMessages((prev) => [...prev, { sender: 'bot', text: msg }])
         saveMessage('bot', msg)
       }
     } catch (error) {
       console.error('Error:', error)
       setThinking(false)
-      const errMsg = '⚠️ Error contacting the backend service.'
+      const errMsg = 'Error contacting the backend service.'
       setMessages((prev) => [...prev, { sender: 'bot', text: errMsg }])
       saveMessage('bot', errMsg)
     }
   }
 
-  // --- Handle Trust Rating ---
+  // --- Rating Handler ---
   const handleRating = async (score: number) => {
     if (!email) return
     if (ratingSubmitting) return
@@ -183,14 +184,14 @@ export default function ChatPage() {
     setRatingPending(false)
     setFeedbackPending(true)
 
-    const botMsg1 = `✅ Thanks! Your trust rating (${score}/5) was recorded.`
+    const botMsg1 = `Thanks! Your trust rating (${score}/5) was recorded.`
     const botMsg2 = 'Would you like to share why you rated it this way?'
     setMessages((prev) => [...prev, { sender: 'bot', text: botMsg1 }, { sender: 'bot', text: botMsg2 }])
     saveMessage('bot', botMsg1)
     saveMessage('bot', botMsg2)
   }
 
-  // --- Handle Feedback ---
+  // --- Feedback Handler ---
   const submitFeedback = async () => {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
@@ -223,7 +224,7 @@ export default function ChatPage() {
       return
     }
 
-    const thankMsg = '🙏 Thank you for sharing your feedback!'
+    const thankMsg = 'Thank you for sharing your feedback.'
     setMessages((prev) => [
       ...prev,
       { sender: 'user', text: feedback },
@@ -271,18 +272,18 @@ export default function ChatPage() {
         </div>
       </header>
 
-      {/* ---------- Chat Messages with Avatars ---------- */}
+      {/* ---------- Chat Messages with Clean Avatars ---------- */}
       <section className="chat-box">
         {messages.map((msg, i) => (
           <div key={i} className={`chat-row ${msg.sender}`}>
             <div className={`chat-avatar ${msg.sender}`}>
-              {msg.sender === 'bot' ? '🤖' : '🧑'}
+              <span className="avatar-initial">{msg.sender === 'bot' ? 'AI' : 'U'}</span>
             </div>
             <div className={`bubble ${msg.sender}`}>{msg.text}</div>
           </div>
         ))}
 
-        {/* 🔹 Rating Prompt */}
+        {/* Rating Prompt */}
         {ratingPending && (
           <div className="bubble bot">
             <b>On a scale of 1–5, how much do you trust this answer?</b>
@@ -296,7 +297,7 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* 🔹 Feedback Prompt */}
+        {/* Feedback Prompt */}
         {feedbackPending && (
           <div className="bubble bot">
             <b>Optional Feedback</b>
@@ -324,7 +325,7 @@ export default function ChatPage() {
                 onClick={() => {
                   setFeedbackPending(false)
                   setFeedback('')
-                  const skipMsg = '👍 No problem! Feedback skipped.'
+                  const skipMsg = 'Feedback skipped.'
                   setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
                   saveMessage('bot', skipMsg)
                 }}
@@ -343,7 +344,7 @@ export default function ChatPage() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question or type 'Apply for a loan'..."
+          placeholder="Ask a question about finance..."
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         />
         <button onClick={sendMessage}>➤</button>
@@ -355,7 +356,7 @@ export default function ChatPage() {
           onClick={() => router.push('/loan-form')}
           className="floating-loan-btn"
         >
-          💰 Apply for a Loan
+          Apply for a Loan
         </button>
       )}
     </main>

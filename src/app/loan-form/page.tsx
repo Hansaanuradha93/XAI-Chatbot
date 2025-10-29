@@ -89,7 +89,7 @@ export default function LoanFormPage() {
       }
 
       const botMessage =
-        `💡 Loan Decision: ${data.prediction}` +
+        `Loan Decision: ${data.prediction}` +
         (explanationText ? `\n\nExplanation:\n${explanationText}` : '')
 
       // ✅ Save both user request & bot response in Supabase
