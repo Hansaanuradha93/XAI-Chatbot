@@ -83,7 +83,6 @@ export default function ChatPage() {
         }))
         setMessages([...initialGreeting, ...pastMessages])
 
-        // detect last loan message
         const last = pastMessages[pastMessages.length - 1]
         if (last && last.text.startsWith('💡 Loan Decision')) {
           setContext('loan')
@@ -157,7 +156,7 @@ export default function ChatPage() {
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-    const variant = context === 'loan' ? mode : 'faq' // ✅ respect mode for loan
+    const variant = context === 'loan' ? mode : 'faq'
 
     const { data, error } = await supabase
       .from('trust_ratings')
@@ -248,7 +247,6 @@ export default function ChatPage() {
       <header className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h2>TrustAI Chatbot</h2>
-          {/* Visual mode badge */}
           <span
             style={{
               padding: '3px 10px',
@@ -263,28 +261,24 @@ export default function ChatPage() {
         </div>
         <div className="user-info">
           <span>{email}</span>
-
-          {/* Only Admin sees mode toggle */}
           {ADMIN_EMAILS.includes(email || '') && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button onClick={toggleMode} className="button small">
-                Toggle Mode
-              </button>
-              <button onClick={() => router.push('/admin')} className="admin-btn">
-                Admin
-              </button>
+              <button onClick={toggleMode} className="button small">Toggle Mode</button>
+              <button onClick={() => router.push('/admin')} className="admin-btn">Admin</button>
             </div>
           )}
-
           <button onClick={signOut} className="danger">Sign out</button>
         </div>
       </header>
 
-      {/* Chat messages */}
+      {/* ---------- Chat Messages with Avatars ---------- */}
       <section className="chat-box">
         {messages.map((msg, i) => (
-          <div key={i} className={`bubble ${msg.sender}`}>
-            {msg.text}
+          <div key={i} className={`chat-row ${msg.sender}`}>
+            <div className={`chat-avatar ${msg.sender}`}>
+              {msg.sender === 'bot' ? '🤖' : '🧑'}
+            </div>
+            <div className={`bubble ${msg.sender}`}>{msg.text}</div>
           </div>
         ))}
 
@@ -316,7 +310,7 @@ export default function ChatPage() {
                 marginTop: '8px',
                 borderRadius: '6px',
                 border: '1px solid var(--border)',
-                background: '#0f1115',
+                background: 'var(--card)',
                 color: 'var(--text)',
                 padding: '6px',
               }}
@@ -343,7 +337,7 @@ export default function ChatPage() {
         <div ref={messagesEndRef} />
       </section>
 
-      {/* 🔹 Input Bar */}
+      {/* Input Bar */}
       <footer className="input-bar">
         <input
           type="text"
@@ -352,26 +346,14 @@ export default function ChatPage() {
           placeholder="Ask a question or type 'Apply for a loan'..."
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage}>➤</button>
       </footer>
 
       {/* Floating Loan Button */}
       {email && (
         <button
           onClick={() => router.push('/loan-form')}
-          className="button primary"
-          style={{
-            position: 'fixed',
-            bottom: '90px',
-            right: '30px',
-            borderRadius: '50px',
-            padding: '10px 18px',
-            fontWeight: 500,
-            background: 'linear-gradient(90deg, #0072ff, #00c6ff)',
-            color: 'white',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-            zIndex: 1000,
-          }}
+          className="floating-loan-btn"
         >
           💰 Apply for a Loan
         </button>

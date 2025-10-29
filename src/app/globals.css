@@ -1,34 +1,38 @@
 :root {
-  --bg: #0f1115;
-  --card: #1b1e24;
-  --border: #2a2d33;
-  --brand: #0072ff;
-  --text: #e6e8eb;
-  --muted: #9ea3a8;
+  --bg: #FFFFFF;          /* Global background */
+  --card: #F7F9F8;        /* Cards, chat bubbles, input areas */
+  --border: #E6E6E6;      /* Light border for structure */
+  --brand: #8EB69B;       /* Soft green accent */
+  --brand-hover: #A0C9B0; /* Hover state */
+  --text: #1D1F23;        /* Primary text */
+  --muted: #6E7C7A;       /* Secondary muted text */
+  --bot-bg: #F4F4F4;      /* Bot bubble background */
+  --user-bg: #1D1F23;     /* User bubble background */
 }
 
+/* ---------- Base ---------- */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   background: var(--bg);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: var(--text);
 }
 
-/* Centered layout */
+/* ---------- Centered Layout ---------- */
 .page-center {
   display: grid;
   place-items: center;
   min-height: 100vh;
 }
 
-/* ---------- Cards / Containers ---------- */
+/* ---------- Card Containers ---------- */
 .card {
   background: var(--card);
   width: 420px;
   border-radius: 18px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   padding: 3rem;
   text-align: center;
   border: 1px solid var(--border);
@@ -37,33 +41,33 @@ html, body {
 .brand {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--brand);
-  margin-bottom: 2.2rem;
+  color: var(--text);
+  margin-bottom: 2rem;
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Google Button ---------- */
 .googleBtn {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #1f2329;
+  background: #FFFFFF;
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
   font-weight: 500;
   font-size: 15px;
   padding: 0.7rem 1.2rem;
-  text-decoration: none;
   width: 100%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  transition: background .2s ease, border-color .2s ease;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: background 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
 .googleBtn:hover {
-  background: #232831;
-  border-color: #3a3f47;
+  background: #F9FAF9;
+  border-color: var(--brand);
 }
 
 .googleLogo {
@@ -73,33 +77,36 @@ html, body {
   height: 20px;
 }
 
+/* ---------- Footer ---------- */
 .footer {
-  font-size: .85rem;
+  font-size: 0.85rem;
   color: var(--muted);
-  margin-top: 2.5rem;
+  margin-top: 2rem;
 }
 
-/* ---------- Chatbot Layout ---------- */
+/* ---------- Chat Layout ---------- */
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: var(--bg);
+  background: var(--bg);
 }
 
+/* Header */
 .chat-header {
-  background: #1b1e24;
+  background: #FFFFFF;
   padding: 1rem 2rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
 }
 
 .chat-header h2 {
   margin: 0;
-  color: var(--brand);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .chat-header .user-info {
@@ -111,83 +118,115 @@ html, body {
 }
 
 .chat-header button {
-  background: #e53935;
+  background: var(--brand);
   border: none;
-  color: white;
+  color: var(--text);
   border-radius: 8px;
   padding: 6px 12px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-/* ---------- Chat bubbles ---------- */
+.chat-header button:hover {
+  background: var(--brand-hover);
+}
+
+/* ---------- Chat Messages ---------- */
 .chat-box {
   flex: 1;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 1rem;
+  background: var(--bg);
 }
 
-.bubble {
-  max-width: 75%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  white-space: pre-wrap;
-  line-height: 1.5;
-  font-size: 0.95rem;
+/* Each message row (avatar + bubble) */
+.chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  max-width: 85%;
 }
 
-.bubble.user {
+.chat-row.bot {
+  flex-direction: row;
+  align-self: flex-start;
+}
+
+.chat-row.user {
+  flex-direction: row-reverse;
   align-self: flex-end;
+}
+
+/* ---------- Avatars ---------- */
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   background: var(--brand);
-  color: white;
-  border-bottom-right-radius: 2px;
+  color: var(--text);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.chat-avatar.user {
+  background: var(--user-bg);
+  color: #FFFFFF;
+}
+
+.chat-avatar.bot {
+  background: var(--brand);
+  color: var(--text);
+}
+
+/* ---------- Bubbles ---------- */
+.bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  width: fit-content;
+  max-width: 75%;
 }
 
 .bubble.bot {
-  align-self: flex-start;
-  background: #1f2329;
+  background: var(--bot-bg);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-bottom-left-radius: 2px;
+  border-radius: 16px 16px 16px 4px;
 }
 
-/* Thinking animation */
-.thinking .dots {
-  display: inline-block;
-  width: 1em;
-  text-align: left;
-}
-.thinking .dots::after {
-  content: '...';
-  animation: dots 1.2s steps(4, end) infinite;
-}
-@keyframes dots {
-  0%, 20% { content: ''; }
-  40% { content: '.'; }
-  60% { content: '..'; }
-  80%, 100% { content: '...'; }
+.bubble.user {
+  background: var(--user-bg);
+  color: #FFFFFF;
+  border-radius: 16px 16px 4px 16px;
 }
 
-/* ---------- Input bar ---------- */
+/* ---------- Input Bar ---------- */
 .input-bar {
   display: flex;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  background: #1b1e24;
-  box-shadow: 0 -1px 3px rgba(0,0,0,0.6);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
   border-top: 1px solid var(--border);
+  background: #FFFFFF;
 }
 
 .input-bar input {
   flex: 1;
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
+  border-radius: 20px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
   outline: none;
-  background: #0f1115;
   color: var(--text);
 }
 
@@ -197,36 +236,35 @@ html, body {
 
 .input-bar button {
   background: var(--brand);
-  color: white;
+  color: var(--text);
   border: none;
-  border-radius: 8px;
-  padding: 0.6rem 1.2rem;
-  font-size: 1rem;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.2s ease;
+  font-size: 1rem;
 }
 
 .input-bar button:hover {
-  background: #3394ff;
+  background: var(--brand-hover);
 }
 
-/* Hide dev indicator */
-.nextjs-portal {
-  display: none !important;
-}
-
-/* ---------- Loan form container ---------- */
+/* ---------- Loan Form ---------- */
 .loan-form {
   background: var(--card);
   padding: 2rem;
   border-radius: 16px;
   width: 420px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   border: 1px solid var(--border);
 }
 
 .loan-form h1 {
-  color: var(--brand);
+  color: var(--text);
   font-size: 1.6rem;
   text-align: center;
   margin-bottom: 1.5rem;
@@ -240,38 +278,29 @@ html, body {
   margin-bottom: 0.3rem;
 }
 
-.loan-form select {
-  width: 100%;
-  padding: 0.6rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 1rem;
-}
-.loan-form select:invalid {
-  color: var(--muted);
-}
-
+.loan-form select,
 .loan-form input {
   width: 100%;
   padding: 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--bg);
+  background: var(--card);
   color: var(--text);
   font-size: 1rem;
+}
+
+.loan-form select:invalid {
+  color: var(--muted);
 }
 
 .loan-form input::placeholder {
   color: var(--muted);
 }
 
-/* Buttons */
+/* ---------- Buttons ---------- */
 .button {
   background: var(--brand);
-  color: white;
+  color: var(--text);
   border: none;
   border-radius: 8px;
   padding: 0.7rem 1.2rem;
@@ -280,15 +309,52 @@ html, body {
   transition: background 0.2s ease;
 }
 
-.button:hover { background: #3394ff; }
+.button:hover {
+  background: var(--brand-hover);
+}
 
 .button.secondary {
   background: var(--border);
-  color: var(--muted);
+  color: var(--text);
 }
 
 .actions {
   display: flex;
   justify-content: space-between;
   margin-top: 1.2rem;
+}
+
+/* ---------- Suggestion Chips ---------- */
+.suggestion-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.suggestion-chip:hover {
+  background: #EAEAEA;
+}
+
+/* ---------- Floating Button ---------- */
+.floating-loan-btn {
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  border-radius: 50px;
+  padding: 10px 18px;
+  font-weight: 500;
+  background: var(--brand);
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.floating-loan-btn:hover {
+  background: var(--brand-hover);
 }
