@@ -14,7 +14,7 @@ interface Message {
 
 type LoanResult = {
   prediction: string
-  explanation?: Record<string, number> | { error?: string }
+  explanation?: Record<string, number> | { error?: string } | null
 }
 
 type ChatContext = 'loan' | 'faq' | null
@@ -25,14 +25,13 @@ export default function ChatPage() {
 
   const initialGreeting: Message[] = [
     { sender: 'bot', text: '👋 Hello! I’m TrustAI — your personal AI loan advisor.' },
-    { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.', type: 'action' },
+    { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.' },
   ]
 
   const [messages, setMessages] = useState<Message[]>(initialGreeting)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
   const [lastResult, setLastResult] = useState<LoanResult | null>(null)
   const [context, setContext] = useState<ChatContext>(null)
   const [ratingPending, setRatingPending] = useState(false)
@@ -63,49 +62,39 @@ export default function ChatPage() {
   }, [messages, thinking, ratingPending, feedbackPending])
 
   // 🔹 Load chat history from Supabase when user logs in
-useEffect(() => {
-  const loadChatHistory = async () => {
-    if (!email) return
-    const { data, error } = await supabase
-      .from('chat_history')
-      .select('sender, message')
-      .eq('user_email', email)
-      .order('timestamp', { ascending: true })
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (!email) return
+      const { data, error } = await supabase
+        .from('chat_history')
+        .select('sender, message')
+        .eq('user_email', email)
+        .order('timestamp', { ascending: true })
 
-    if (error) {
-      console.error('Error loading chat history:', error)
-      return
-    }
-
-    if (data && data.length > 0) {
-      const pastMessages = data.map((m) => ({
-        sender: m.sender as 'user' | 'bot',
-        text: m.message,
-        type: 'text',
-      }))
-
-      // ✅ Always keep greeting + loan CTA at the top
-      const combined = [...initialGreeting, ...pastMessages]
-      setMessages(combined)
-
-      // 🔍 Detect if latest message is a loan decision to trigger rating
-      const lastMsg = combined[combined.length - 1]
-      if (lastMsg && lastMsg.sender === 'bot' && lastMsg.text.startsWith('💡 Loan Decision')) {
-        console.log('📊 Detected loan decision message — enabling rating prompt.')
-        setContext('loan')
-        setRatingPending(true)
-        setLastResult({
-          prediction: lastMsg.text.includes('Approved') ? 'Approved' : 'Rejected',
-          explanation: lastMsg.text.includes('Explanation:') ? {} : null,
-        })
+      if (error) {
+        console.error('Error loading chat history:', error)
+        return
       }
-    } else {
-      setMessages(initialGreeting)
-    }
-  }
 
-  loadChatHistory()
-}, [email])
+      if (data && data.length > 0) {
+        const pastMessages = data.map((m) => ({
+          sender: m.sender as 'user' | 'bot',
+          text: m.message,
+        }))
+        setMessages([...initialGreeting, ...pastMessages])
+
+        // detect last loan message
+        const last = pastMessages[pastMessages.length - 1]
+        if (last && last.text.startsWith('💡 Loan Decision')) {
+          setContext('loan')
+          setRatingPending(true)
+        }
+      } else {
+        setMessages(initialGreeting)
+      }
+    }
+    loadChatHistory()
+  }, [email])
 
   // 🔹 Save each message to Supabase
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
@@ -168,7 +157,7 @@ useEffect(() => {
     if (ratingSubmitting) return
 
     setRatingSubmitting(true)
-    const variant = context === 'loan' ? mode : 'faq' // ✅ Use active mode for loan
+    const variant = context === 'loan' ? mode : 'faq' // ✅ respect mode for loan
 
     const { data, error } = await supabase
       .from('trust_ratings')
@@ -186,8 +175,8 @@ useEffect(() => {
     setRatingSubmitting(false)
 
     if (error || !data) {
-      console.error('❌ Supabase insert failed:', { error, data, variant, email, score, context })
-      alert(`Failed to save rating: ${error?.message || 'unknown error'}`)
+      console.error('❌ Supabase insert failed:', { error, data })
+      alert('Failed to save rating.')
       return
     }
 
@@ -216,12 +205,15 @@ useEffect(() => {
       .single()
 
     if (!latestRating) {
-      alert('No rating record found to attach feedback.')
+      alert('No rating found.')
       setFeedbackSubmitting(false)
       return
     }
 
-    const { error } = await supabase.from('trust_ratings').update({ comment: feedback }).eq('id', latestRating.id)
+    const { error } = await supabase
+      .from('trust_ratings')
+      .update({ comment: feedback })
+      .eq('id', latestRating.id)
 
     setFeedbackSubmitting(false)
     setFeedbackPending(false)
@@ -254,7 +246,21 @@ useEffect(() => {
   return (
     <main className="chat-container">
       <header className="chat-header">
-        <h2>TrustAI Chatbot</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2>TrustAI Chatbot</h2>
+          {/* Visual mode badge */}
+          <span
+            style={{
+              padding: '3px 10px',
+              borderRadius: '8px',
+              background: mode === 'xai' ? '#1e8e3e' : '#888',
+              fontSize: '0.8rem',
+              color: 'white',
+            }}
+          >
+            {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
+          </span>
+        </div>
         <div className="user-info">
           <span>{email}</span>
 
@@ -262,7 +268,7 @@ useEffect(() => {
           {ADMIN_EMAILS.includes(email || '') && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button onClick={toggleMode} className="button small">
-                Mode: {mode === 'xai' ? 'XAI' : 'Baseline'}
+                Toggle Mode
               </button>
               <button onClick={() => router.push('/admin')} className="admin-btn">
                 Admin
@@ -270,12 +276,11 @@ useEffect(() => {
             </div>
           )}
 
-          <button onClick={signOut} className="danger">
-            Sign out
-          </button>
+          <button onClick={signOut} className="danger">Sign out</button>
         </div>
       </header>
 
+      {/* Chat messages */}
       <section className="chat-box">
         {messages.map((msg, i) => (
           <div key={i} className={`bubble ${msg.sender}`}>
@@ -289,12 +294,7 @@ useEffect(() => {
             <b>On a scale of 1–5, how much do you trust this answer?</b>
             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
               {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  className="button"
-                  disabled={ratingSubmitting}
-                  onClick={() => handleRating(n)}
-                >
+                <button key={n} className="button" disabled={ratingSubmitting} onClick={() => handleRating(n)}>
                   {n}
                 </button>
               ))}
@@ -319,32 +319,27 @@ useEffect(() => {
                 background: '#0f1115',
                 color: 'var(--text)',
                 padding: '6px',
-          }}
-        />
-        <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-          <button
-          className="button"
-          disabled={feedbackSubmitting}
-          onClick={submitFeedback}
-        >
-          Submit Feedback
-        </button>
-        <button
-          className="button secondary"
-            onClick={() => {
-            // allow skipping feedback
-            setFeedbackPending(false)
-            setFeedback('')
-              const skipMsg = '👍 No problem! Feedback skipped.'
-              setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
-              saveMessage('bot', skipMsg)
-            }}
-          >
-            Skip
-          </button>
-        </div>
-      </div>
-    )}
+              }}
+            />
+            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+              <button className="button" disabled={feedbackSubmitting} onClick={submitFeedback}>
+                Submit Feedback
+              </button>
+              <button
+                className="button secondary"
+                onClick={() => {
+                  setFeedbackPending(false)
+                  setFeedback('')
+                  const skipMsg = '👍 No problem! Feedback skipped.'
+                  setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
+                  saveMessage('bot', skipMsg)
+                }}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </section>
 
@@ -360,7 +355,7 @@ useEffect(() => {
         <button onClick={sendMessage}>Send</button>
       </footer>
 
-      {/* 🔹 Floating Apply for Loan Button */}
+      {/* Floating Loan Button */}
       {email && (
         <button
           onClick={() => router.push('/loan-form')}

@@ -7,7 +7,7 @@ import { useSession } from '@/hooks/useSession'
 
 export default function LoanFormPage() {
   const router = useRouter()
-  const { email } = useSession()  // ✅ to log user_email
+  const { email } = useSession() // ✅ to log user_email
 
   const [form, setForm] = useState({
     education: '',
@@ -20,7 +20,14 @@ export default function LoanFormPage() {
 
   const [loading, setLoading] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // ✅ Retrieve active mode (persisted in localStorage)
+  const mode =
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setForm(prev => ({
       ...prev,
@@ -52,8 +59,7 @@ export default function LoanFormPage() {
     setLoading(true)
 
     try {
-      const mode = (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai';
-
+      // ✅ Send variant in query param
       const res = await fetch(`http://127.0.0.1:8000/predict?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,8 +70,8 @@ export default function LoanFormPage() {
           loan_amount: loan,
           loan_term: term,
           cibil_score: score
+        })
       })
-    })
 
       if (!res.ok) throw new Error(`Backend returned ${res.status}`)
       const data = await res.json()
@@ -76,7 +82,9 @@ export default function LoanFormPage() {
       if (data.explanation && typeof data.explanation === 'object') {
         const entries = Object.entries(data.explanation)
         if (entries.length > 0) {
-          explanationText = entries.map(([f, v]) => `${f}: ${Number(v).toFixed(4)}`).join('\n')
+          explanationText = entries
+            .map(([f, v]) => `${f}: ${Number(v).toFixed(4)}`)
+            .join('\n')
         }
       }
 
@@ -90,9 +98,15 @@ export default function LoanFormPage() {
           {
             user_email: email,
             sender: 'user',
-            message: `Loan Application Submitted:\nIncome: ${income}, Loan: ${loan}, Term: ${term}, Score: ${score}`
+            message: `Loan Application Submitted:\nIncome: ${income}, Loan: ${loan}, Term: ${term}, Score: ${score}`,
+            variant: mode
           },
-          { user_email: email, sender: 'bot', message: botMessage }
+          {
+            user_email: email,
+            sender: 'bot',
+            message: botMessage,
+            variant: mode
+          }
         ])
         if (error) console.error('❌ Error saving chat to Supabase:', error)
       }
@@ -110,36 +124,94 @@ export default function LoanFormPage() {
   return (
     <main className="page-center">
       <form className="loan-form" onSubmit={handleSubmit}>
-        <h1>Loan Application</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1>Loan Application</h1>
+          {/* ✅ Visual Mode Indicator */}
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: '8px',
+              background: mode === 'xai' ? '#1e8e3e' : '#888',
+              fontSize: '0.8rem',
+              color: 'white'
+            }}
+          >
+            {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
+          </span>
+        </div>
 
         <label>Education Level</label>
-        <select name="education" value={form.education} onChange={handleChange} required>
+        <select
+          name="education"
+          value={form.education}
+          onChange={handleChange}
+          required
+        >
           <option value="">Select...</option>
           <option value="0">Graduate</option>
           <option value="1">Not Graduate</option>
         </select>
 
         <label>Self Employment Status</label>
-        <select name="self_employed" value={form.self_employed} onChange={handleChange} required>
+        <select
+          name="self_employed"
+          value={form.self_employed}
+          onChange={handleChange}
+          required
+        >
           <option value="">Select...</option>
           <option value="1">Yes</option>
           <option value="0">No</option>
         </select>
 
         <label>Annual Income (LKR)</label>
-        <input type="number" name="income_annum" value={form.income_annum} onChange={handleChange} min="0" required />
+        <input
+          type="number"
+          name="income_annum"
+          value={form.income_annum}
+          onChange={handleChange}
+          min="0"
+          required
+        />
 
         <label>Requested Loan Amount (LKR)</label>
-        <input type="number" name="loan_amount" value={form.loan_amount} onChange={handleChange} min="0" required />
+        <input
+          type="number"
+          name="loan_amount"
+          value={form.loan_amount}
+          onChange={handleChange}
+          min="0"
+          required
+        />
 
         <label>Repayment Duration (Months)</label>
-        <input type="number" name="loan_term" value={form.loan_term} onChange={handleChange} min="1" max="12" required />
+        <input
+          type="number"
+          name="loan_term"
+          value={form.loan_term}
+          onChange={handleChange}
+          min="1"
+          max="12"
+          required
+        />
 
         <label>Credit Score</label>
-        <input type="number" name="cibil_score" value={form.cibil_score} onChange={handleChange} min="300" max="900" required />
+        <input
+          type="number"
+          name="cibil_score"
+          value={form.cibil_score}
+          onChange={handleChange}
+          min="300"
+          max="900"
+          required
+        />
 
         <div className="actions">
-          <button type="button" onClick={() => router.push('/chat')} className="button secondary">
+          <button
+            type="button"
+            onClick={() => router.push('/chat')}
+            className="button secondary"
+          >
             Back
           </button>
           <button type="submit" className="button primary" disabled={loading}>
