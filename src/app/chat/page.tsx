@@ -47,6 +47,8 @@ export default function ChatPage() {
     (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
   )
 
+  const [userRole, setUserRole] = useState<'admin' | 'user'>('user')
+
   const toggleMode = () => {
     const newMode = mode === 'xai' ? 'baseline' : 'xai'
     setMode(newMode)
@@ -95,6 +97,32 @@ export default function ChatPage() {
     }
     loadChatHistory()
   }, [email])
+
+// 🔹 Fetch user mode allocation from backend
+useEffect(() => {
+  const fetchUserMode = async () => {
+    if (!email) return
+    try {
+      const res = await fetch('http://127.0.0.1:8000/user_mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+
+      if (data.mode) {
+        setMode(data.mode)
+        localStorage.setItem('chat_mode', data.mode)
+      }
+      if (data.role) {
+        setUserRole(data.role)
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to fetch user mode:', err)
+    }
+  }
+  fetchUserMode()
+}, [email])
 
   // 🔹 Save message
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
@@ -260,28 +288,73 @@ export default function ChatPage() {
             {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
           </span>
         </div>
-        <div className="user-info">
-          <span>{email}</span>
-          {ADMIN_EMAILS.includes(email || '') && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button onClick={toggleMode} className="button small">Toggle Mode</button>
-              <button onClick={() => router.push('/admin')} className="admin-btn">Admin</button>
-            </div>
-          )}
-          <button onClick={signOut} className="danger">Sign out</button>
-        </div>
+          <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Profile Icon */}
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  border: mode === 'xai' ? '2px solid #1e8e3e' : '2px solid transparent',
+                  background: '#ccc',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  color: '#333',
+                }}
+              >
+                {email ? email.charAt(0).toUpperCase() : '?'}
+              </div>
+
+              {/* Only admins see the toggle + Admin button */}
+              {userRole === 'admin' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button onClick={toggleMode} className="button small">Toggle Mode</button>
+                  <button onClick={() => router.push('/admin')} className="admin-btn">Admin</button>
+                </div>
+              )}
+
+            <button onClick={signOut} className="danger">Sign out</button>
+      </div>
       </header>
 
       {/* ---------- Chat Messages with Clean Avatars ---------- */}
       <section className="chat-box">
-        {messages.map((msg, i) => (
-          <div key={i} className={`chat-row ${msg.sender}`}>
-            <div className={`chat-avatar ${msg.sender}`}>
-              <span className="avatar-initial">{msg.sender === 'bot' ? 'AI' : 'U'}</span>
+        {messages.map((msg, i) => {
+          const isBot = msg.sender === 'bot'
+          const isDetailedExplanation =
+            msg.text.includes('**Decision Outcome') ||
+            msg.text.includes('**Main Financial Factors') ||
+            msg.text.includes('**Conclusion')
+
+          // ✅ Format message text (bold, bullet points, spacing) for human_message
+          const formattedText = isDetailedExplanation
+            ? msg.text
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // bold
+                .replace(/- /g, '• ') // bullet points
+                .replace(/\n/g, '<br/>') // line breaks
+            : msg.text
+
+          return (
+            <div key={i} className={`chat-row ${msg.sender}`}>
+              <div className={`chat-avatar ${msg.sender}`}>
+                <span className="avatar-initial">{isBot ? 'AI' : 'U'}</span>
+              </div>
+              {/* ✅ Keep bubble colors same, only format text */}
+              <div
+                className={`bubble ${msg.sender}`}
+                style={{
+                  whiteSpace: 'pre-line',
+                  lineHeight: 1.6,
+                  fontSize: '0.95rem',
+                  fontFamily: 'Inter, sans-serif',
+                }}
+                dangerouslySetInnerHTML={{ __html: formattedText }}
+              />
             </div>
-            <div className={`bubble ${msg.sender}`}>{msg.text}</div>
-          </div>
-        ))}
+          )
+        })}
 
         {/* Rating Prompt */}
         {ratingPending && (

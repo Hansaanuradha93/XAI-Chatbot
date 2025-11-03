@@ -7,20 +7,25 @@ import { useSession } from '@/hooks/useSession'
 
 export default function LoanFormPage() {
   const router = useRouter()
-  const { email } = useSession() // ✅ to log user_email
+  const { email } = useSession()
+  const [loading, setLoading] = useState(false)
 
+  // ✅ Include all required fields for /loan_form_test
   const [form, setForm] = useState({
+    no_of_dependents: '',
     education: '',
     self_employed: '',
     income_annum: '',
     loan_amount: '',
     loan_term: '',
-    cibil_score: ''
+    cibil_score: '',
+    residential_assets_value: '',
+    commercial_assets_value: '',
+    luxury_assets_value: '',
+    bank_asset_value: ''
   })
 
-  const [loading, setLoading] = useState(false)
-
-  // ✅ Retrieve active mode (persisted in localStorage)
+  // ✅ Retrieve active mode from localStorage
   const mode =
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
@@ -38,6 +43,7 @@ export default function LoanFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // --- Basic validation ---
     const income = Number(form.income_annum)
     const loan = Number(form.loan_amount)
     const term = Number(form.loan_term)
@@ -57,19 +63,22 @@ export default function LoanFormPage() {
     }
 
     setLoading(true)
-
     try {
-      // ✅ Send variant in query param
-      const res = await fetch(`http://127.0.0.1:8000/predict?variant=${mode}`, {
+      const res = await fetch(`http://127.0.0.1:8000/loan_form_test?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          no_of_dependents: Number(form.no_of_dependents),
           education: Number(form.education),
           self_employed: Number(form.self_employed),
           income_annum: income,
           loan_amount: loan,
           loan_term: term,
-          cibil_score: score
+          cibil_score: score,
+          residential_assets_value: Number(form.residential_assets_value),
+          commercial_assets_value: Number(form.commercial_assets_value),
+          luxury_assets_value: Number(form.luxury_assets_value),
+          bank_asset_value: Number(form.bank_asset_value)
         })
       })
 
@@ -77,7 +86,7 @@ export default function LoanFormPage() {
       const data = await res.json()
       console.log('✅ Backend response:', data)
 
-      // ✅ Format the bot response
+      // --- Format bot message ---
       let explanationText = ''
       if (data.explanation && typeof data.explanation === 'object') {
         const entries = Object.entries(data.explanation)
@@ -88,17 +97,15 @@ export default function LoanFormPage() {
         }
       }
 
-      const botMessage =
-        `Loan Decision: ${data.prediction}` +
-        (explanationText ? `\n\nExplanation:\n${explanationText}` : '')
+      const botMessage = data.human_message || `Loan Decision: ${data.prediction}`
 
-      // ✅ Save both user request & bot response in Supabase
+      // --- Save both user + bot messages in Supabase ---
       if (email) {
         const { error } = await supabase.from('chat_history').insert([
           {
             user_email: email,
             sender: 'user',
-            message: `Loan Application Submitted:\nIncome: ${income}, Loan: ${loan}, Term: ${term}, Score: ${score}`,
+            message: `Loan Form Submitted:\n${JSON.stringify(form, null, 2)}`,
             variant: mode
           },
           {
@@ -111,11 +118,10 @@ export default function LoanFormPage() {
         if (error) console.error('❌ Error saving chat to Supabase:', error)
       }
 
-      // ✅ Redirect to chat page
       router.push('/chat')
     } catch (err) {
       console.error('❌ API Error:', err)
-      alert('Error connecting to the backend API.')
+      alert('Error connecting to backend API.')
     } finally {
       setLoading(false)
     }
@@ -126,7 +132,6 @@ export default function LoanFormPage() {
       <form className="loan-form" onSubmit={handleSubmit}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1>Loan Application</h1>
-          {/* ✅ Visual Mode Indicator */}
           <span
             style={{
               padding: '4px 10px',
@@ -140,19 +145,25 @@ export default function LoanFormPage() {
           </span>
         </div>
 
-        <label>Education Level</label>
-        <select
-          name="education"
-          value={form.education}
+        {/* --- Basic Details --- */}
+        <label>No. of Dependents</label>
+        <input
+          type="number"
+          name="no_of_dependents"
+          value={form.no_of_dependents}
           onChange={handleChange}
+          min="0"
           required
-        >
+        />
+
+        <label>Education Level</label>
+        <select name="education" value={form.education} onChange={handleChange} required>
           <option value="">Select...</option>
           <option value="0">Graduate</option>
           <option value="1">Not Graduate</option>
         </select>
 
-        <label>Self Employment Status</label>
+        <label>Self Employed</label>
         <select
           name="self_employed"
           value={form.self_employed}
@@ -174,7 +185,7 @@ export default function LoanFormPage() {
           required
         />
 
-        <label>Requested Loan Amount (LKR)</label>
+        <label>Loan Amount (LKR)</label>
         <input
           type="number"
           name="loan_amount"
@@ -184,7 +195,7 @@ export default function LoanFormPage() {
           required
         />
 
-        <label>Repayment Duration (Months)</label>
+        <label>Loan Term (Months)</label>
         <input
           type="number"
           name="loan_term"
@@ -195,7 +206,7 @@ export default function LoanFormPage() {
           required
         />
 
-        <label>Credit Score</label>
+        <label>Credit Score (300–900)</label>
         <input
           type="number"
           name="cibil_score"
@@ -206,12 +217,50 @@ export default function LoanFormPage() {
           required
         />
 
+        {/* --- Asset Values --- */}
+        <h3>Assets</h3>
+        <label>Residential Assets (LKR)</label>
+        <input
+          type="number"
+          name="residential_assets_value"
+          value={form.residential_assets_value}
+          onChange={handleChange}
+          min="0"
+          required
+        />
+
+        <label>Commercial Assets (LKR)</label>
+        <input
+          type="number"
+          name="commercial_assets_value"
+          value={form.commercial_assets_value}
+          onChange={handleChange}
+          min="0"
+          required
+        />
+
+        <label>Luxury Assets (LKR)</label>
+        <input
+          type="number"
+          name="luxury_assets_value"
+          value={form.luxury_assets_value}
+          onChange={handleChange}
+          min="0"
+          required
+        />
+
+        <label>Bank Assets (LKR)</label>
+        <input
+          type="number"
+          name="bank_asset_value"
+          value={form.bank_asset_value}
+          onChange={handleChange}
+          min="0"
+          required
+        />
+
         <div className="actions">
-          <button
-            type="button"
-            onClick={() => router.push('/chat')}
-            className="button secondary"
-          >
+          <button type="button" onClick={() => router.push('/chat')} className="button secondary">
             Back
           </button>
           <button type="submit" className="button primary" disabled={loading}>
