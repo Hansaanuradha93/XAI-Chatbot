@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
-import { ADMIN_EMAILS } from '@/lib/adminConfig'
+import { apiFetch } from '@/lib/apiClient'
 
 interface Message {
   sender: 'user' | 'bot'
@@ -103,12 +103,11 @@ useEffect(() => {
   const fetchUserMode = async () => {
     if (!email) return
     try {
-      const res = await fetch('http://127.0.0.1:8000/user_mode', {
+      const data = await apiFetch(`/user_mode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       })
-      const data = await res.json()
 
       if (data.mode) {
         setMode(data.mode)
@@ -147,16 +146,16 @@ useEffect(() => {
     setThinking(true)
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/faq_answer', {
+      const data = await apiFetch(`/faq_answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: trimmed,
           user_email: email || 'anonymous',
-        }),
+        })
       })
 
-      const data = await res.json()
+      // const data = await res.json()
       setThinking(false)
 
       if (data.answer) {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
+import { apiFetch } from '@/lib/apiClient'
 
 export default function LoanFormPage() {
   const router = useRouter()
@@ -64,7 +65,7 @@ export default function LoanFormPage() {
 
     setLoading(true)
     try {
-      const res = await fetch(`http://127.0.0.1:8000/loan_form_test?variant=${mode}`, {
+      const data = await apiFetch(`/loan_form_test?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,10 +82,6 @@ export default function LoanFormPage() {
           bank_asset_value: Number(form.bank_asset_value)
         })
       })
-
-      if (!res.ok) throw new Error(`Backend returned ${res.status}`)
-      const data = await res.json()
-      console.log('✅ Backend response:', data)
 
       // --- Format bot message ---
       let explanationText = ''
