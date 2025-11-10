@@ -103,7 +103,7 @@ useEffect(() => {
   const fetchUserMode = async () => {
     if (!email) return
     try {
-      const data = await apiFetch(`/user_mode`, {
+      const data = await apiFetch(`/api/v1/users/mode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -146,7 +146,7 @@ useEffect(() => {
     setThinking(true)
 
     try {
-      const data = await apiFetch(`/faq_answer`, {
+      const data = await apiFetch(`/api/v1/faq/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

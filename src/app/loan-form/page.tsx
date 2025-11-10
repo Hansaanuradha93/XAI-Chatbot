@@ -65,7 +65,7 @@ export default function LoanFormPage() {
 
     setLoading(true)
     try {
-      const data = await apiFetch(`/loan_form_test?variant=${mode}`, {
+      const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
