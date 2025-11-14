@@ -7,9 +7,70 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
 
 /* ============================================================
+   PROGRESS BAR WITH LABELED STEPS
+============================================================ */
+const steps = ["Personal", "Loan", "Credit", "Assets", "Review"];
+
+const ProgressBar = ({ step }: { step: number }) => (
+  <div className="progress-wrapper-vertical">
+    {steps.map((label, index) => {
+      const stepNumber = index + 1;
+      const isActive = stepNumber === step;
+      const isCompleted = stepNumber < step;
+
+      return (
+        <div key={index} className="progress-block">
+          {/* Label ABOVE circle */}
+          <div
+            className="progress-label-vertical"
+            style={{
+              color: isActive ? "var(--text)" : "var(--muted)",
+              fontWeight: isActive ? 600 : 400
+            }}
+          >
+            {label}
+          </div>
+
+          <div className="progress-inner">
+            {/* Circle */}
+            <div
+              className="progress-circle"
+              style={{
+                background: isCompleted || isActive ? "var(--brand)" : "#DCE0DA",
+                color: isCompleted || isActive ? "#fff" : "#6E7C7A"
+              }}
+            >
+              {stepNumber}
+            </div>
+
+            {/* Line */}
+            {index < steps.length - 1 && (
+              <div
+                className="progress-line-vertical"
+                style={{
+                  background: isCompleted ? "var(--brand)" : "#DCE0DA"
+                }}
+              />
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+/* ============================================================
    TOOLTIP LABEL WITH REQUIRED ASTERISK
-   ============================================================ */
-const Label = ({ children, tip, required }: { children: React.ReactNode; tip: string; required?: boolean }) => (
+============================================================ */
+const Label = ({
+  children,
+  tip,
+  required
+}: {
+  children: React.ReactNode
+  tip: string
+  required?: boolean
+}) => (
   <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
     {children}
     {required && <span className="required-star">*</span>}
@@ -22,15 +83,9 @@ const Label = ({ children, tip, required }: { children: React.ReactNode; tip: st
 
 /* ============================================================
    STEP COMPONENTS
-   ============================================================ */
+============================================================ */
 
-function Step1({
-  form,
-  handleChange,
-  handleBlur,
-  inlineErrors,
-  touched
-}: any) {
+function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: any) {
   return (
     <>
       <p>Step 1 of 5</p>
@@ -41,8 +96,8 @@ function Step1({
       </Label>
       <input
         type="number"
-        placeholder="e.g., 2"
         name="no_of_dependents"
+        placeholder="e.g., 2"
         value={form.no_of_dependents}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -95,71 +150,55 @@ function Step1({
   )
 }
 
-function Step2({
-  form,
-  handleChange,
-  handleBlur,
-  inlineErrors,
-  touched,
-  dti,
-  ratioColor
-}: any) {
+function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, ratioColor }: any) {
   return (
     <>
       <p>Step 2 of 5</p>
       <h2>Loan Details</h2>
 
       <Label tip="Your total yearly income before tax." required>
-        Annual Income (LKR)
+        Annual Income
       </Label>
       <input
         type="number"
-        placeholder="e.g., 1200000"
         name="income_annum"
+        placeholder="e.g., 1200000"
         value={form.income_annum}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={
-          touched.income_annum && inlineErrors.income_annum
-            ? 'error-input'
-            : ''
-        }
+        className={touched.income_annum && inlineErrors.income_annum ? 'error-input' : ''}
       />
       {touched.income_annum && inlineErrors.income_annum && (
         <p className="error-text">Annual income must be greater than 0.</p>
       )}
 
-      <Label tip="The amount you are requesting to borrow." required>
-        Loan Amount (LKR)
+      <Label tip="How much money you want to borrow." required>
+        Loan Amount
       </Label>
       <input
         type="number"
-        placeholder="e.g., 500000"
         name="loan_amount"
+        placeholder="e.g., 500000"
         value={form.loan_amount}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={
-          touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''
-        }
+        className={touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''}
       />
       {touched.loan_amount && inlineErrors.loan_amount && (
         <p className="error-text">Loan amount must be greater than 0.</p>
       )}
 
-      <Label tip="Shorter terms reduce risk for lenders." required>
+      <Label tip="Shorter terms reduce lending risk." required>
         Loan Term (Months)
       </Label>
       <input
         type="number"
-        placeholder="1–12"
         name="loan_term"
+        placeholder="1–12"
         value={form.loan_term}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={
-          touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''
-        }
+        className={touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''}
       />
       {touched.loan_term && inlineErrors.loan_term && (
         <p className="error-text">Loan term must be 1–12 months.</p>
@@ -171,25 +210,20 @@ function Step2({
           <div className="value" style={{ color: ratioColor(dti, 40, 60) }}>
             {(dti * 100).toFixed(1)}%
           </div>
-          <div className="note">Suggested: Under 40%</div>
+          <div className="note">Ideal: Under 40%</div>
         </div>
       </div>
     </>
   )
 }
 
-function Step3({
-  form,
-  handleChange,
-  handleBlur,
-  cibilCategory
-}: any) {
+function Step3({ form, handleChange, handleBlur, cibilCategory }: any) {
   return (
     <>
       <p>Step 3 of 5</p>
       <h2>Credit Score Insights</h2>
 
-      <Label tip="A higher credit score increases approval chances.">
+      <Label tip="Higher score increases approval chances.">
         Credit Score: {form.cibil_score} ({cibilCategory})
       </Label>
       <input
@@ -206,7 +240,7 @@ function Step3({
         <div className="insight">
           <div className="label">Credit Category</div>
           <div className="value">{cibilCategory}</div>
-          <div className="note">Based on score {form.cibil_score}.</div>
+          <div className="note">Based on score {form.cibil_score}</div>
         </div>
       </div>
     </>
@@ -227,7 +261,7 @@ function Step4({
       <p>Step 4 of 5</p>
       <h2>Asset Information</h2>
 
-      <Label tip="Value of houses or apartments." required>
+      <Label tip="Value of your house or apartment." required>
         Residential Assets
       </Label>
       <input
@@ -248,7 +282,7 @@ function Step4({
           <p className="error-text">{inlineErrors.residential_assets_value}</p>
         )}
 
-      <Label tip="Value of shops, offices." required>
+      <Label tip="Value of shops, offices, commercial property." required>
         Commercial Assets
       </Label>
       <input
@@ -269,7 +303,7 @@ function Step4({
           <p className="error-text">{inlineErrors.commercial_assets_value}</p>
         )}
 
-      <Label tip="Cars, jewelry, gold." required>
+      <Label tip="Cars, jewelry, gold, valuables." required>
         Luxury Assets
       </Label>
       <input
@@ -288,7 +322,7 @@ function Step4({
         <p className="error-text">{inlineErrors.luxury_assets_value}</p>
       )}
 
-      <Label tip="Savings and bank balances." required>
+      <Label tip="Bank savings, deposits, balances." required>
         Bank Assets
       </Label>
       <input
@@ -315,53 +349,34 @@ function Step4({
           <div className="value" style={{ color: ratioColor(lta, 40, 80) }}>
             {(lta * 100).toFixed(1)}%
           </div>
-          <div className="note">Suggested: Under 80%</div>
+          <div className="note">Ideal: Under 80%</div>
         </div>
       </div>
     </>
   )
 }
 
-function Step5({
-  income,
-  loan,
-  totalAssets,
-  dti,
-  lta,
-  form,
-  cibilCategory,
-  ratioColor
-}: any) {
+function Step5({ income, loan, totalAssets, dti, lta, form, cibilCategory, ratioColor }: any) {
   return (
     <>
       <p>Final Step</p>
       <h2>Review Your Application</h2>
 
       <div className="summary-card">
-        <p>
-          <b>Annual Income:</b> Rs. {income.toLocaleString()}
-        </p>
-        <p>
-          <b>Loan Amount:</b> Rs. {loan.toLocaleString()}
-        </p>
-        <p>
-          <b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}
-        </p>
+        <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
+        <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
+        <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
+
+        <p><b>DTI Ratio:</b> {(dti * 100).toFixed(1)}%</p>
 
         <p>
-          <b>Debt-to-Income Ratio:</b> {(dti * 100).toFixed(1)}%
-        </p>
-
-        <p>
-          <b>Loan-to-Asset Ratio:</b>{' '}
+          <b>LTA Ratio:</b>{' '}
           <span style={{ color: ratioColor(lta, 40, 80) }}>
             {(lta * 100).toFixed(1)}%
           </span>
         </p>
 
-        <p>
-          <b>Credit Score:</b> {form.cibil_score} ({cibilCategory})
-        </p>
+        <p><b>Credit Score:</b> {form.cibil_score} ({cibilCategory})</p>
       </div>
     </>
   )
@@ -369,7 +384,7 @@ function Step5({
 
 /* ============================================================
    MAIN COMPONENT
-   ============================================================ */
+============================================================ */
 
 export default function LoanFormPage() {
   const router = useRouter()
@@ -377,7 +392,6 @@ export default function LoanFormPage() {
 
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
-  const totalSteps = 5
 
   const [form, setForm] = useState({
     no_of_dependents: '',
@@ -393,23 +407,21 @@ export default function LoanFormPage() {
     bank_asset_value: ''
   })
 
-  // track touched fields
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
+  const totalSteps = 5
   const mode =
     (typeof window !== 'undefined' &&
-      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+      (localStorage.getItem('chat_mode') as 'baseline' | 'xai')) || 'xai'
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleBlur = (e: any) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
-
-    // mark as touched once user starts typing/selecting
     if (value !== '') {
       setTouched(prev => ({ ...prev, [name]: true }))
     }
@@ -434,59 +446,46 @@ export default function LoanFormPage() {
     return 'Excellent'
   }, [form.cibil_score])
 
-  /* ratioColor */
   const ratioColor = (ratio: number, good: number, warn: number) => {
     if (ratio * 100 < good) return '#1e8e3e'
     if (ratio * 100 < warn) return '#f0ad4e'
     return '#d9534f'
   }
 
-  /* Inline errors (strings) */
+  /* Inline validation */
   const inlineErrors: Record<string, string> = {}
 
-  // Step 1: dependents 0–30
   if (step === 1) {
-    if (form.no_of_dependents !== '') {
-      const deps = Number(form.no_of_dependents)
-      if (Number.isNaN(deps) || deps < 0 || deps > 30) {
-        inlineErrors.no_of_dependents = 'Dependents must be between 0 and 30.'
-      }
-    }
-    if (form.education === '') {
-      inlineErrors.education = 'Required'
-    }
-    if (form.self_employed === '') {
-      inlineErrors.self_employed = 'Required'
-    }
+    const deps = Number(form.no_of_dependents)
+    if (form.no_of_dependents !== '' && (deps < 0 || deps > 30))
+      inlineErrors.no_of_dependents = 'Dependents must be between 0 and 30.'
+
+    if (form.education === '') inlineErrors.education = 'Required'
+    if (form.self_employed === '') inlineErrors.self_employed = 'Required'
   }
 
-  // Step 2: income / loan / term
   if (step === 2) {
     if (income <= 0) inlineErrors.income_annum = 'Annual income must be greater than 0.'
     if (loan <= 0) inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
     const lt = Number(form.loan_term)
-    if (Number.isNaN(lt) || lt < 1 || lt > 12) {
-      inlineErrors.loan_term = 'Loan term must be 1–12 months.'
-    }
+    if (lt < 1 || lt > 12) inlineErrors.loan_term = 'Loan term must be 1–12 months.'
   }
 
-  // Step 4: assets (A3 — only negative values get inline errors)
   if (step === 4) {
-    if (form.residential_assets_value !== '' && Number(form.residential_assets_value) < 0) {
+    if (form.residential_assets_value !== '' && res < 0)
       inlineErrors.residential_assets_value = 'Value cannot be negative.'
-    }
-    if (form.commercial_assets_value !== '' && Number(form.commercial_assets_value) < 0) {
+
+    if (form.commercial_assets_value !== '' && com < 0)
       inlineErrors.commercial_assets_value = 'Value cannot be negative.'
-    }
-    if (form.luxury_assets_value !== '' && Number(form.luxury_assets_value) < 0) {
+
+    if (form.luxury_assets_value !== '' && lux < 0)
       inlineErrors.luxury_assets_value = 'Value cannot be negative.'
-    }
-    if (form.bank_asset_value !== '' && Number(form.bank_asset_value) < 0) {
+
+    if (form.bank_asset_value !== '' && bank < 0)
       inlineErrors.bank_asset_value = 'Value cannot be negative.'
-    }
   }
 
-  /* Next button logic */
+  /* Next Button Logic */
   const canNext = () => {
     if (step === 1) {
       return (
@@ -501,30 +500,19 @@ export default function LoanFormPage() {
       return (
         income > 0 &&
         loan > 0 &&
-        Number(form.loan_term) >= 1 &&
+        form.loan_term !== '' &&
         Object.keys(inlineErrors).length === 0
       )
     }
 
     if (step === 4) {
-      const resVal = form.residential_assets_value
-      const comVal = form.commercial_assets_value
-      const luxVal = form.luxury_assets_value
-      const bankVal = form.bank_asset_value
-
-      const allFilled =
-        resVal !== '' &&
-        comVal !== '' &&
-        luxVal !== '' &&
-        bankVal !== ''
-
-      const allNonNegative =
-        Number(resVal) >= 0 &&
-        Number(comVal) >= 0 &&
-        Number(luxVal) >= 0 &&
-        Number(bankVal) >= 0
-
-      return allFilled && allNonNegative
+      return (
+        form.residential_assets_value !== '' &&
+        form.commercial_assets_value !== '' &&
+        form.luxury_assets_value !== '' &&
+        form.bank_asset_value !== '' &&
+        Object.keys(inlineErrors).length === 0
+      )
     }
 
     return true
@@ -534,6 +522,7 @@ export default function LoanFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+
     try {
       const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
@@ -582,22 +571,8 @@ export default function LoanFormPage() {
   return (
     <main className="page-center">
       <form className="loan-form" onSubmit={handleSubmit}>
-        {/* Step Indicators */}
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '8px' }}>
-          {[1, 2, 3, 4, 5].map(n => (
-            <div
-              key={n}
-              style={{
-                flex: 1,
-                height: '6px',
-                borderRadius: '4px',
-                background: n <= step ? 'var(--brand)' : '#DCE0DA'
-              }}
-            />
-          ))}
-        </div>
+        <ProgressBar step={step} />
 
-        {/* Steps */}
         {step === 1 && (
           <Step1
             form={form}
@@ -654,7 +629,6 @@ export default function LoanFormPage() {
           />
         )}
 
-        {/* Buttons */}
         <div className="actions">
           {step > 1 && (
             <button
@@ -678,7 +652,11 @@ export default function LoanFormPage() {
           )}
 
           {step === totalSteps && (
-            <button type="submit" className="button primary" disabled={loading}>
+            <button
+              type="submit"
+              className="button primary"
+              disabled={loading}
+            >
               {loading ? 'Analyzing…' : 'Submit'}
             </button>
           )}

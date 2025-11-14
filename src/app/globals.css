@@ -594,3 +594,51 @@ html, body {
   flex-direction: column;
   gap: 6px;
 }
+
+/* ======= PROGRESS BAR ========= */
+
+/* Vertical stacked labels + compact progress bar */
+.progress-wrapper-vertical {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.progress-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20%; /* 5 equal sections */
+}
+
+.progress-label-vertical {
+  font-size: 0.78rem;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.progress-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.progress-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.progress-line-vertical {
+  height: 3px;
+  flex: 1;
+  margin-left: 6px;
+  border-radius: 2px;
+}
