@@ -570,10 +570,12 @@ export default function LoanFormPage() {
   /* RENDER */
   return (
     <main className="page-center">
+      <a href="/chat" className="back-to-chat-btn">← Back to Chat</a>
       <form className="loan-form" onSubmit={handleSubmit}>
         <ProgressBar step={step} />
 
         {step === 1 && (
+          <div className="step-animation">
           <Step1
             form={form}
             handleChange={handleChange}
@@ -581,9 +583,11 @@ export default function LoanFormPage() {
             inlineErrors={inlineErrors}
             touched={touched}
           />
+          </div>
         )}
 
         {step === 2 && (
+          <div className="step-animation">
           <Step2
             form={form}
             handleChange={handleChange}
@@ -593,18 +597,22 @@ export default function LoanFormPage() {
             dti={dti}
             ratioColor={ratioColor}
           />
+          </div>
         )}
 
         {step === 3 && (
+          <div className="step-animation">
           <Step3
             form={form}
             handleChange={handleChange}
             handleBlur={handleBlur}
             cibilCategory={cibilCategory}
           />
+          </div>
         )}
 
         {step === 4 && (
+          <div className="step-animation">
           <Step4
             form={form}
             handleChange={handleChange}
@@ -614,9 +622,11 @@ export default function LoanFormPage() {
             lta={lta}
             ratioColor={ratioColor}
           />
+          </div>
         )}
 
         {step === 5 && (
+          <div className="step-animation">
           <Step5
             income={income}
             loan={loan}
@@ -627,6 +637,7 @@ export default function LoanFormPage() {
             cibilCategory={cibilCategory}
             ratioColor={ratioColor}
           />
+          </div>
         )}
 
         <div className="actions">
