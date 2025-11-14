@@ -365,3 +365,13 @@ html, body {
 .floating-loan-btn:hover {
   background: var(--brand-hover);
 }
+
+.section-title {
+  margin-top: 24px;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  border-left: 4px solid var(--primary, #1e8e3e);
+  padding-left: 8px;
+}

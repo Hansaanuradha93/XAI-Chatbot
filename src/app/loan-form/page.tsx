@@ -11,7 +11,7 @@ export default function LoanFormPage() {
   const { email } = useSession()
   const [loading, setLoading] = useState(false)
 
-  // ✅ Include all required fields for /loan_form_test
+  // Form state
   const [form, setForm] = useState({
     no_of_dependents: '',
     education: '',
@@ -23,10 +23,10 @@ export default function LoanFormPage() {
     residential_assets_value: '',
     commercial_assets_value: '',
     luxury_assets_value: '',
-    bank_asset_value: ''
+    bank_asset_value: '',
   })
 
-  // ✅ Retrieve active mode from localStorage
+  // Read mode
   const mode =
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
@@ -37,14 +37,13 @@ export default function LoanFormPage() {
     const { name, value } = e.target
     setForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // --- Basic validation ---
     const income = Number(form.income_annum)
     const loan = Number(form.loan_amount)
     const term = Number(form.loan_term)
@@ -79,11 +78,11 @@ export default function LoanFormPage() {
           residential_assets_value: Number(form.residential_assets_value),
           commercial_assets_value: Number(form.commercial_assets_value),
           luxury_assets_value: Number(form.luxury_assets_value),
-          bank_asset_value: Number(form.bank_asset_value)
-        })
+          bank_asset_value: Number(form.bank_asset_value),
+        }),
       })
 
-      // --- Format bot message ---
+      // explanation formatting
       let explanationText = ''
       if (data.explanation && typeof data.explanation === 'object') {
         const entries = Object.entries(data.explanation)
@@ -96,23 +95,23 @@ export default function LoanFormPage() {
 
       const botMessage = data.human_message || `Loan Decision: ${data.prediction}`
 
-      // --- Save both user + bot messages in Supabase ---
+      // Save chat to Supabase
       if (email) {
         const { error } = await supabase.from('chat_history').insert([
           {
             user_email: email,
             sender: 'user',
             message: `Loan Form Submitted:\n${JSON.stringify(form, null, 2)}`,
-            variant: mode
+            variant: mode,
           },
           {
             user_email: email,
             sender: 'bot',
             message: botMessage,
-            variant: mode
-          }
+            variant: mode,
+          },
         ])
-        if (error) console.error('❌ Error saving chat to Supabase:', error)
+        if (error) console.error('❌ Error saving chat:', error)
       }
 
       router.push('/chat')
@@ -127,6 +126,7 @@ export default function LoanFormPage() {
   return (
     <main className="page-center">
       <form className="loan-form" onSubmit={handleSubmit}>
+        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1>Loan Application</h1>
           <span
@@ -135,14 +135,18 @@ export default function LoanFormPage() {
               borderRadius: '8px',
               background: mode === 'xai' ? '#1e8e3e' : '#888',
               fontSize: '0.8rem',
-              color: 'white'
+              color: 'white',
             }}
           >
             {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
           </span>
         </div>
 
-        {/* --- Basic Details --- */}
+        {/* =======================
+            A. PERSONAL INFORMATION
+            ======================= */}
+        <h2 className="section-title">A. Personal Information</h2>
+
         <label>No. of Dependents</label>
         <input
           type="number"
@@ -154,7 +158,12 @@ export default function LoanFormPage() {
         />
 
         <label>Education Level</label>
-        <select name="education" value={form.education} onChange={handleChange} required>
+        <select
+          name="education"
+          value={form.education}
+          onChange={handleChange}
+          required
+        >
           <option value="">Select...</option>
           <option value="0">Graduate</option>
           <option value="1">Not Graduate</option>
@@ -171,6 +180,11 @@ export default function LoanFormPage() {
           <option value="1">Yes</option>
           <option value="0">No</option>
         </select>
+
+        {/* =======================
+            B. LOAN DETAILS
+            ======================= */}
+        <h2 className="section-title">B. Loan Details</h2>
 
         <label>Annual Income (LKR)</label>
         <input
@@ -203,6 +217,11 @@ export default function LoanFormPage() {
           required
         />
 
+        {/* =======================
+            C. CREDIT INFORMATION
+            ======================= */}
+        <h2 className="section-title">C. Credit Information</h2>
+
         <label>Credit Score (300–900)</label>
         <input
           type="number"
@@ -214,8 +233,11 @@ export default function LoanFormPage() {
           required
         />
 
-        {/* --- Asset Values --- */}
-        <h3>Assets</h3>
+        {/* =======================
+            D. ASSETS
+            ======================= */}
+        <h2 className="section-title">D. Assets</h2>
+
         <label>Residential Assets (LKR)</label>
         <input
           type="number"
@@ -257,7 +279,11 @@ export default function LoanFormPage() {
         />
 
         <div className="actions">
-          <button type="button" onClick={() => router.push('/chat')} className="button secondary">
+          <button
+            type="button"
+            onClick={() => router.push('/chat')}
+            className="button secondary"
+          >
             Back
           </button>
           <button type="submit" className="button primary" disabled={loading}>
