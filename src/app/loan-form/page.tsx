@@ -26,7 +26,8 @@ const Label = ({ children, tip, required }) => (
 function Step1({ form, handleChange }) {
   return (
     <>
-      <h2>Step 1 of 4 — Personal Information</h2>
+      <p>Step 1 of 5</p>
+      <h2>Personal Information</h2>
 
       <Label tip="Number of people depending on your income." required>
         No. of Dependents
@@ -67,7 +68,8 @@ function Step1({ form, handleChange }) {
 function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
   return (
     <>
-      <h2>Step 2 of 4 — Loan Details</h2>
+      <p>Step 2 of 5</p>
+      <h2>Loan Details</h2>
 
       <Label tip="Your total yearly income before tax." required>
         Annual Income (LKR)
@@ -121,7 +123,8 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
 function Step3({ form, handleChange, cibilCategory }) {
   return (
     <>
-      <h2>Step 3 of 4 — Credit Score Insights</h2>
+      <p>Step 3 of 5</p>
+      <h2>Credit Score Insights</h2>
 
       <Label tip="A higher credit score increases approval chances.">
         Credit Score: {form.cibil_score} ({cibilCategory})
@@ -160,7 +163,7 @@ function Step4({
 }) {
   return (
     <>
-      <h2>Step 4 of 4 — Asset Information</h2>
+      <h2>Step 4 of 5 — Asset Information</h2>
 
       <Label tip="Value of houses or apartments." required>
         Residential Assets
@@ -171,8 +174,9 @@ function Step4({
         value={form.residential_assets_value}
         onChange={handleChange}
       />
+      {inlineErrors.res && <p className="error">{inlineErrors.res}</p>}
 
-      <Label tip="Offices, shops, or commercial buildings." required>
+      <Label tip="Value of shops, offices, or commercial buildings." required>
         Commercial Assets
       </Label>
       <input
@@ -181,8 +185,9 @@ function Step4({
         value={form.commercial_assets_value}
         onChange={handleChange}
       />
+      {inlineErrors.com && <p className="error">{inlineErrors.com}</p>}
 
-      <Label tip="Cars, jewelry, or other luxury items." required>
+      <Label tip="Cars, jewelry, high-value items." required>
         Luxury Assets
       </Label>
       <input
@@ -191,8 +196,9 @@ function Step4({
         value={form.luxury_assets_value}
         onChange={handleChange}
       />
+      {inlineErrors.lux && <p className="error">{inlineErrors.lux}</p>}
 
-      <Label tip="Bank savings, deposits, balances." required>
+      <Label tip="Savings, deposits, bank balances." required>
         Bank Assets
       </Label>
       <input
@@ -201,26 +207,59 @@ function Step4({
         value={form.bank_asset_value}
         onChange={handleChange}
       />
+      {inlineErrors.bank && <p className="error">{inlineErrors.bank}</p>}
 
-      <h3 style={{ marginTop: '1.2rem' }}>Review Your Application</h3>
+      {/* Asset Strength */}
+      <h3 style={{ marginTop: "1.5rem" }}>Asset Strength</h3>
+
+      <div className="insights-card">
+        <div className="insight">
+          <div className="label">Loan-to-Asset Ratio</div>
+          <div className="value" style={{ color: ratioColor(lta, 40, 80) }}>
+            {(lta * 100).toFixed(1)}%
+          </div>
+          <div className="note">Suggested: Under 80%</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Step5({
+  income,
+  loan,
+  totalAssets,
+  dti,
+  lta,
+  form,
+  cibilCategory,
+  ratioColor
+}) {
+  return (
+    <>
+      <p>Final Step</p>
+      <h2>Review Your Application</h2>
+
       <div className="summary-card">
         <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
         <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
         <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
 
-        <p><b>DTI Ratio:</b> {(dti * 100).toFixed(1)}%</p>
+        <p><b>Debt-to-Income Ratio:</b> {(dti * 100).toFixed(1)}%</p>
 
         <p>
-          <b>LTA Ratio:</b>{' '}
-          <span style={{ color: ratioColor(lta, 80, 120) }}>
+          <b>Loan-to-Asset Ratio:</b>{" "}
+          <span style={{ color: ratioColor(lta, 40, 80) }}>
             {(lta * 100).toFixed(1)}%
           </span>
         </p>
 
-        <p><b>Credit Score:</b> {form.cibil_score} ({cibilCategory})</p>
+        <p>
+          <b>Credit Score:</b> {form.cibil_score} ({cibilCategory})
+        </p>
       </div>
     </>
-  )
+  );
 }
 
 /* ============================================================
@@ -236,7 +275,7 @@ export default function LoanFormPage() {
   const { email } = useSession()
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
-  const totalSteps = 4
+  const totalSteps = 5
 
   const [form, setForm] = useState({
     no_of_dependents: '',
@@ -431,6 +470,18 @@ export default function LoanFormPage() {
             ratioColor={ratioColor}
           />
         )}
+        {step === 5 && (
+  <Step5
+    income={income}
+    loan={loan}
+    totalAssets={totalAssets}
+    dti={dti}
+    lta={lta}
+    form={form}
+    cibilCategory={cibilCategory}
+    ratioColor={ratioColor}
+  />
+)}
 
         {/* Buttons */}
         <div className="actions">
