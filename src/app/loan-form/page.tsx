@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
@@ -392,6 +392,15 @@ export default function LoanFormPage() {
 
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
+  const totalSteps = 5
+
+   // ✅ Auto scroll to top whenever step changes
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }, [step]);
 
   const [form, setForm] = useState({
     no_of_dependents: '',
@@ -409,7 +418,6 @@ export default function LoanFormPage() {
 
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
-  const totalSteps = 5
   const mode =
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'baseline' | 'xai')) || 'xai'
