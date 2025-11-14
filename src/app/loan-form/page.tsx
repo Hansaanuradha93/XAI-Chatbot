@@ -34,12 +34,12 @@ const ProgressBar = ({ step }: { step: number }) => (
           <div className="progress-inner">
             {/* Circle */}
             <div
-              className="progress-circle"
+              className={`progress-circle ${isActive ? "glow" : ""}`}
               style={{
                 background: isCompleted || isActive ? "var(--brand)" : "#DCE0DA",
-                color: isCompleted || isActive ? "#fff" : "#6E7C7A"
-              }}
-            >
+                color: isCompleted || isActive ? "#fff" : "#6E7C7A",
+            }}
+        >
               {stepNumber}
             </div>
 

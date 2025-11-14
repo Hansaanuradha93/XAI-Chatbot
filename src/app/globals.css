@@ -672,3 +672,11 @@ html, body {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ✨ Glowing active step */
+.progress-circle.glow {
+  box-shadow: 0 0 0 4px rgba(142, 182, 155, 0.25),
+              0 0 12px rgba(142, 182, 155, 0.6);
+  transform: scale(1.08);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
