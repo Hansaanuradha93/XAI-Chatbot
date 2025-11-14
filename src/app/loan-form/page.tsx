@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
@@ -11,9 +11,6 @@ export default function LoanFormPage() {
   const { email } = useSession()
   const [loading, setLoading] = useState(false)
 
-  // --------------------------
-  // FORM STATE
-  // --------------------------
   const [form, setForm] = useState({
     no_of_dependents: '',
     education: '',
@@ -25,148 +22,88 @@ export default function LoanFormPage() {
     residential_assets_value: '',
     commercial_assets_value: '',
     luxury_assets_value: '',
-    bank_asset_value: '',
+    bank_asset_value: ''
   })
 
-  // --------------------------
-  // INLINE ERRORS
-  // --------------------------
-  const [errors, setErrors] = useState<{ [key: string]: string }>({})
-
-  const validateField = (name: string, value: string) => {
-    let message = ''
-
-    switch (name) {
-      case 'income_annum':
-        if (Number(value) < 0) message = 'Income must be 0 or greater.'
-        break
-
-      case 'loan_amount':
-        if (Number(value) < 0) message = 'Loan amount must be 0 or greater.'
-        break
-
-      case 'loan_term':
-        if (Number(value) < 1 || Number(value) > 12)
-          message = 'Loan term must be between 1 and 12 months.'
-        break
-
-      case 'cibil_score':
-        if (Number(value) < 300 || Number(value) > 900)
-          message = 'Credit score must be between 300 and 900.'
-        break
-
-      case 'no_of_dependents':
-      case 'residential_assets_value':
-      case 'commercial_assets_value':
-      case 'luxury_assets_value':
-      case 'bank_asset_value':
-        if (Number(value) < 0) message = 'Value cannot be negative.'
-        break
-    }
-
-    setErrors(prev => ({ ...prev, [name]: message }))
-  }
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-
-    setForm(prev => ({ ...prev, [name]: value }))
-    validateField(name, value)
-  }
-
-  // MODE
   const mode =
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
 
-  // --------------------------
-  // CAN SUBMIT?
-  // --------------------------
-  const hasErrors = Object.values(errors).some(msg => msg.length > 0)
-  const missingRequired = Object.values(form).some(v => v === '')
+  // ----------------------------
+  // 📌 CALCULATED VALUES (auto)
+  // ----------------------------
+  const income = Number(form.income_annum) || 0
+  const loan = Number(form.loan_amount) || 0
+  const res = Number(form.residential_assets_value) || 0
+  const com = Number(form.commercial_assets_value) || 0
+  const lux = Number(form.luxury_assets_value) || 0
+  const bank = Number(form.bank_asset_value) || 0
+
+  const totalAssets = res + com + lux + bank
+  const dtiRatio = income > 0 ? loan / income : 0
+  const loanToAsset = totalAssets > 0 ? loan / totalAssets : 0
+
+  const cibilCategory = useMemo(() => {
+    const score = Number(form.cibil_score)
+    if (!score) return 'Unknown'
+    if (score < 600) return 'Poor'
+    if (score < 750) return 'Fair'
+    return 'Excellent'
+  }, [form.cibil_score])
+
+  const handleChange = (e: any) => {
+    const { name, value } = e.target
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (hasErrors || missingRequired) {
-      alert('Please fix the errors before submitting.')
-      return
-    }
-
     setLoading(true)
 
     try {
-      const payload = {
-        no_of_dependents: Number(form.no_of_dependents),
-        education: Number(form.education),
-        self_employed: Number(form.self_employed),
-        income_annum: Number(form.income_annum),
-        loan_amount: Number(form.loan_amount),
-        loan_term: Number(form.loan_term),
-        cibil_score: Number(form.cibil_score),
-        residential_assets_value: Number(form.residential_assets_value),
-        commercial_assets_value: Number(form.commercial_assets_value),
-        luxury_assets_value: Number(form.luxury_assets_value),
-        bank_asset_value: Number(form.bank_asset_value),
-      }
-
       const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          no_of_dependents: Number(form.no_of_dependents),
+          education: Number(form.education),
+          self_employed: Number(form.self_employed),
+          income_annum: income,
+          loan_amount: loan,
+          loan_term: Number(form.loan_term),
+          cibil_score: Number(form.cibil_score),
+          residential_assets_value: res,
+          commercial_assets_value: com,
+          luxury_assets_value: lux,
+          bank_asset_value: bank
+        })
       })
 
-      // Save chat
       if (email) {
         await supabase.from('chat_history').insert([
           {
             user_email: email,
             sender: 'user',
             message: `Loan Form Submitted:\n${JSON.stringify(form, null, 2)}`,
-            variant: mode,
+            variant: mode
           },
           {
             user_email: email,
             sender: 'bot',
             message: data.human_message || `Loan Decision: ${data.prediction}`,
-            variant: mode,
-          },
+            variant: mode
+          }
         ])
       }
 
       router.push('/chat')
     } catch (err) {
       console.error(err)
-      alert('Error connecting to backend API.')
+      alert('Error contacting backend')
     } finally {
       setLoading(false)
     }
   }
-
-  // --------------------------
-  // COMPONENT UI
-  // --------------------------
-  const renderField = (
-    label: string,
-    name: string,
-    type: 'number' | 'text' = 'number',
-    props: any = {}
-  ) => (
-    <div className="field-group">
-      <label>{label}</label>
-      <input
-        type={type}
-        name={name}
-        value={(form as any)[name]}
-        onChange={handleChange}
-        className={errors[name] ? 'error-input' : ''}
-        {...props}
-      />
-      {errors[name] && <p className="error-text">{errors[name]}</p>}
-    </div>
-  )
 
   return (
     <main className="page-center">
@@ -179,7 +116,7 @@ export default function LoanFormPage() {
               borderRadius: '8px',
               background: mode === 'xai' ? '#1e8e3e' : '#888',
               fontSize: '0.8rem',
-              color: 'white',
+              color: 'white'
             }}
           >
             {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
@@ -187,55 +124,75 @@ export default function LoanFormPage() {
         </div>
 
         <h2>A. Personal Information</h2>
-        {renderField('No. of Dependents', 'no_of_dependents')}
-        <label>Education Level</label>
-        <select
-          name="education"
-          value={form.education}
-          onChange={handleChange}
-          className={errors.education ? 'error-input' : ''}
-        >
-          <option value="">Select...</option>
-          <option value="0">Graduate</option>
-          <option value="1">Not Graduate</option>
-        </select>
-
-        <label>Self Employed</label>
-        <select
-          name="self_employed"
-          value={form.self_employed}
-          onChange={handleChange}
-        >
-          <option value="">Select...</option>
-          <option value="1">Yes</option>
-          <option value="0">No</option>
-        </select>
+        <label>No. of Dependents</label>
+        <input name="no_of_dependents" value={form.no_of_dependents} onChange={handleChange} />
 
         <h2>B. Loan Details</h2>
-        {renderField('Annual Income (LKR)', 'income_annum')}
-        {renderField('Loan Amount (LKR)', 'loan_amount')}
-        {renderField('Loan Term (Months)', 'loan_term')}
 
-        <h2>C. Credit Information</h2>
-        {renderField('Credit Score (300–900)', 'cibil_score')}
+        <label>Annual Income (LKR)</label>
+        <input name="income_annum" value={form.income_annum} onChange={handleChange} />
+
+        <label>Loan Amount (LKR)</label>
+        <input name="loan_amount" value={form.loan_amount} onChange={handleChange} />
+
+        {/* 📌 DTI WIDGET */}
+        <div className="info-box">
+          <b>Debt-to-Income Ratio:</b> {isFinite(dtiRatio) ? (dtiRatio * 100).toFixed(1) + '%' : '0%'}
+          <br />
+          {dtiRatio > 0.4 && <span style={{ color: 'red' }}>High Risk</span>}
+          {dtiRatio <= 0.4 && <span style={{ color: 'green' }}>Healthy</span>}
+        </div>
+
+        <label>Loan Term (Months)</label>
+        <input name="loan_term" value={form.loan_term} onChange={handleChange} />
+
+        <h2>C. Credit Score</h2>
+        <label>Credit Score (300–900)</label>
+        <input name="cibil_score" value={form.cibil_score} onChange={handleChange} />
+
+        {/* 📌 CIBIL CATEGORY */}
+        <div className="info-box">
+          <b>Score Category:</b> {cibilCategory}
+        </div>
 
         <h2>D. Assets</h2>
-        {renderField('Residential Assets (LKR)', 'residential_assets_value')}
-        {renderField('Commercial Assets (LKR)', 'commercial_assets_value')}
-        {renderField('Luxury Assets (LKR)', 'luxury_assets_value')}
-        {renderField('Bank Assets (LKR)', 'bank_asset_value')}
+
+        <label>Residential Assets</label>
+        <input name="residential_assets_value" value={form.residential_assets_value} onChange={handleChange} />
+
+        <label>Commercial Assets</label>
+        <input name="commercial_assets_value" value={form.commercial_assets_value} onChange={handleChange} />
+
+        <label>Luxury Assets</label>
+        <input name="luxury_assets_value" value={form.luxury_assets_value} onChange={handleChange} />
+
+        <label>Bank Assets</label>
+        <input name="bank_asset_value" value={form.bank_asset_value} onChange={handleChange} />
+
+        {/* 📌 TOTAL ASSETS */}
+        <div className="info-box">
+          <b>Total Asset Value:</b> Rs. {totalAssets.toLocaleString()}
+        </div>
+
+        {/* 📌 Loan-to-Asset Ratio */}
+        {totalAssets > 0 && (
+          <div className="info-box">
+            <b>Loan-to-Asset Ratio:</b> {loanToAsset.toFixed(2)}
+            <br />
+            {loanToAsset < 0.25 ? (
+              <span style={{ color: 'green' }}>Low Risk</span>
+            ) : (
+              <span style={{ color: 'red' }}>High Risk</span>
+            )}
+          </div>
+        )}
 
         <div className="actions">
           <button type="button" onClick={() => router.push('/chat')} className="button secondary">
             Back
           </button>
-
-          <button
-            type="submit"
-            className="button primary"
-            disabled={loading || hasErrors || missingRequired}
-          >
-            {loading ? 'Analyzing…' : 'Submit'}
+          <button type="submit" className="button primary" disabled={loading}>
+            {loading ? 'Analyzing...' : 'Submit'}
           </button>
         </div>
       </form>

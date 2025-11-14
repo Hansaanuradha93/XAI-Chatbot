@@ -389,3 +389,12 @@ html, body {
 .error-input {
   border: 2px solid #d9534f !important;
 }
+
+.info-box {
+  background: var(--bg);
+  padding: 10px 14px;
+  border-left: 4px solid var(--brand);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
