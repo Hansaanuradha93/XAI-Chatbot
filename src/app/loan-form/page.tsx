@@ -7,32 +7,56 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
 
 /* ============================================================
-   STEP COMPONENTS — MOVED OUTSIDE (Fixes Typing Blur Problem)
+   TOOLTIP LABEL WITH REQUIRED ASTERISK
+   ============================================================ */
+const Label = ({ children, tip, required }) => (
+  <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+    {children}
+    {required && <span className="required-star">*</span>}
+    <span className="tooltip-icon">ⓘ
+      <span className="tooltip-text">{tip}</span>
+    </span>
+  </label>
+);
+
+/* ============================================================
+   STEP COMPONENTS
    ============================================================ */
 
 function Step1({ form, handleChange }) {
   return (
     <>
-      <h2>Personal Information</h2>
+      <h2>Step 1 of 4 — Personal Information</h2>
 
-      <label>No. of Dependents</label>
+      <Label tip="Number of people depending on your income." required>
+        No. of Dependents
+      </Label>
       <input
         type="number"
+        placeholder="e.g., 2"
         name="no_of_dependents"
         value={form.no_of_dependents}
         onChange={handleChange}
       />
 
-      <label>Education</label>
+      <Label tip="Higher education improves creditworthiness." required>
+        Education
+      </Label>
       <select name="education" value={form.education} onChange={handleChange}>
-        <option value="">Select</option>
+        <option value="">Select education</option>
         <option value="0">Graduate</option>
         <option value="1">Not Graduate</option>
       </select>
 
-      <label>Self Employed</label>
-      <select name="self_employed" value={form.self_employed} onChange={handleChange}>
-        <option value="">Select</option>
+      <Label tip="Self-employed applicants may have variable income." required>
+        Self Employed
+      </Label>
+      <select
+        name="self_employed"
+        value={form.self_employed}
+        onChange={handleChange}
+      >
+        <option value="">Select option</option>
         <option value="1">Yes</option>
         <option value="0">No</option>
       </select>
@@ -43,29 +67,38 @@ function Step1({ form, handleChange }) {
 function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
   return (
     <>
-      <h2>Loan Details</h2>
+      <h2>Step 2 of 4 — Loan Details</h2>
 
-      <label>Annual Income (LKR)</label>
+      <Label tip="Your total yearly income before tax." required>
+        Annual Income (LKR)
+      </Label>
       <input
         type="number"
+        placeholder="e.g., 1200000"
         name="income_annum"
         value={form.income_annum}
         onChange={handleChange}
       />
       {inlineErrors.income_annum && <p className="error">{inlineErrors.income_annum}</p>}
 
-      <label>Loan Amount (LKR)</label>
+      <Label tip="The amount you are requesting to borrow." required>
+        Loan Amount (LKR)
+      </Label>
       <input
         type="number"
+        placeholder="e.g., 500000"
         name="loan_amount"
         value={form.loan_amount}
         onChange={handleChange}
       />
       {inlineErrors.loan_amount && <p className="error">{inlineErrors.loan_amount}</p>}
 
-      <label>Loan Term (Months)</label>
+      <Label tip="Shorter terms reduce risk for lenders." required>
+        Loan Term (Months)
+      </Label>
       <input
         type="number"
+        placeholder="1–12"
         name="loan_term"
         value={form.loan_term}
         onChange={handleChange}
@@ -88,11 +121,11 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
 function Step3({ form, handleChange, cibilCategory }) {
   return (
     <>
-      <h2>Credit Score Insights</h2>
+      <h2>Step 3 of 4 — Credit Score Insights</h2>
 
-      <label>
+      <Label tip="A higher credit score increases approval chances.">
         Credit Score: {form.cibil_score} ({cibilCategory})
-      </label>
+      </Label>
       <input
         type="range"
         min="300"
@@ -106,7 +139,7 @@ function Step3({ form, handleChange, cibilCategory }) {
         <div className="insight">
           <div className="label">Credit Category</div>
           <div className="value">{cibilCategory}</div>
-          <div className="note">Based on score {form.cibil_score}</div>
+          <div className="note">Based on score {form.cibil_score}.</div>
         </div>
       </div>
     </>
@@ -127,55 +160,55 @@ function Step4({
 }) {
   return (
     <>
-      <h2>Asset Information</h2>
+      <h2>Step 4 of 4 — Asset Information</h2>
 
-      <label>Residential Assets</label>
+      <Label tip="Value of houses or apartments." required>
+        Residential Assets
+      </Label>
       <input
+        placeholder="e.g., 3000000"
         name="residential_assets_value"
         value={form.residential_assets_value}
         onChange={handleChange}
       />
-      {inlineErrors.res && <p className="error">{inlineErrors.res}</p>}
 
-      <label>Commercial Assets</label>
+      <Label tip="Offices, shops, or commercial buildings." required>
+        Commercial Assets
+      </Label>
       <input
+        placeholder="e.g., 0"
         name="commercial_assets_value"
         value={form.commercial_assets_value}
         onChange={handleChange}
       />
-      {inlineErrors.com && <p className="error">{inlineErrors.com}</p>}
 
-      <label>Luxury Assets</label>
+      <Label tip="Cars, jewelry, or other luxury items." required>
+        Luxury Assets
+      </Label>
       <input
+        placeholder="e.g., 0"
         name="luxury_assets_value"
         value={form.luxury_assets_value}
         onChange={handleChange}
       />
-      {inlineErrors.lux && <p className="error">{inlineErrors.lux}</p>}
 
-      <label>Bank Assets</label>
+      <Label tip="Bank savings, deposits, balances." required>
+        Bank Assets
+      </Label>
       <input
+        placeholder="e.g., 200000"
         name="bank_asset_value"
         value={form.bank_asset_value}
         onChange={handleChange}
       />
-      {inlineErrors.bank && <p className="error">{inlineErrors.bank}</p>}
 
-      {/* Summary */}
       <h3 style={{ marginTop: '1.2rem' }}>Review Your Application</h3>
-
       <div className="summary-card">
-        <p><b>Dependents:</b> {form.no_of_dependents}</p>
-        <p><b>Education:</b> {form.education === "0" ? "Graduate" : "Not Graduate"}</p>
-        <p><b>Self Employed:</b> {form.self_employed === "1" ? "Yes" : "No"}</p>
-
         <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
         <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
-        <p><b>Loan Term:</b> {form.loan_term} months</p>
+        <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
 
         <p><b>DTI Ratio:</b> {(dti * 100).toFixed(1)}%</p>
-
-        <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
 
         <p>
           <b>LTA Ratio:</b>{' '}
@@ -184,9 +217,7 @@ function Step4({
           </span>
         </p>
 
-        <p>
-          <b>Credit Score:</b> {form.cibil_score} ({cibilCategory})
-        </p>
+        <p><b>Credit Score:</b> {form.cibil_score} ({cibilCategory})</p>
       </div>
     </>
   )
@@ -196,11 +227,14 @@ function Step4({
    MAIN COMPONENT
    ============================================================ */
 
+/* ============================================================
+   MAIN COMPONENT
+   ============================================================ */
+
 export default function LoanFormPage() {
   const router = useRouter()
   const { email } = useSession()
   const [loading, setLoading] = useState(false)
-
   const [step, setStep] = useState(1)
   const totalSteps = 4
 
@@ -222,13 +256,12 @@ export default function LoanFormPage() {
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
 
-  // FIX typing blur
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
-  // Auto calculations
+  /* Calculations */
   const income = Number(form.income_annum) || 0
   const loan = Number(form.loan_amount) || 0
 
@@ -238,8 +271,8 @@ export default function LoanFormPage() {
   const bank = Number(form.bank_asset_value) || 0
 
   const totalAssets = res + com + lux + bank
-  const dti = income > 0 ? loan / income : 0
-  const lta = totalAssets > 0 ? loan / totalAssets : 0
+  const dti = income ? loan / income : 0
+  const lta = totalAssets ? loan / totalAssets : 0
 
   const cibilCategory = useMemo(() => {
     if (form.cibil_score < 600) return 'Poor'
@@ -247,13 +280,12 @@ export default function LoanFormPage() {
     return 'Excellent'
   }, [form.cibil_score])
 
-  // Inline errors
+  /* Inline errors */
   const inlineErrors = {}
-
   if (step === 2) {
     if (income <= 0) inlineErrors.income_annum = 'Annual income must be greater than 0.'
     if (loan <= 0) inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
-    if (Number(form.loan_term) < 1 || Number(form.loan_term) > 12)
+    if (form.loan_term < 1 || form.loan_term > 12)
       inlineErrors.loan_term = 'Loan term must be 1–12 months.'
   }
 
@@ -264,7 +296,7 @@ export default function LoanFormPage() {
     if (!form.bank_asset_value) inlineErrors.bank = 'Required'
   }
 
-  // step validation
+  /* Next validation */
   const canNext = () => {
     if (step === 1)
       return (
@@ -277,7 +309,7 @@ export default function LoanFormPage() {
       return (
         income > 0 &&
         loan > 0 &&
-        Number(form.loan_term) >= 1 &&
+        form.loan_term >= 1 &&
         Object.keys(inlineErrors).length === 0
       )
 
@@ -292,14 +324,14 @@ export default function LoanFormPage() {
     return true
   }
 
-  // color helper
+  /* Color helper */
   const ratioColor = (ratio, good, warn) => {
     if (ratio * 100 < good) return '#1e8e3e'
     if (ratio * 100 < warn) return '#f0ad4e'
     return '#d9534f'
   }
 
-  // Submit handler
+  /* Submit */
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -328,13 +360,13 @@ export default function LoanFormPage() {
           {
             user_email: email,
             sender: 'user',
-            message: `Loan Form Submitted:\n${JSON.stringify(form, null, 2)}`,
+            message: JSON.stringify(form),
             variant: mode
           },
           {
             user_email: email,
             sender: 'bot',
-            message: data.human_message || `Loan Decision: ${data.prediction}`,
+            message: data.human_message || data.prediction,
             variant: mode
           }
         ])
@@ -367,7 +399,7 @@ export default function LoanFormPage() {
           ))}
         </div>
 
-        {/* RENDER THE CORRECT STEP */}
+        {/* Steps */}
         {step === 1 && <Step1 form={form} handleChange={handleChange} />}
         {step === 2 && (
           <Step2
@@ -400,7 +432,7 @@ export default function LoanFormPage() {
           />
         )}
 
-        {/* BUTTONS */}
+        {/* Buttons */}
         <div className="actions">
           {step > 1 && (
             <button
