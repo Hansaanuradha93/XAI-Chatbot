@@ -375,3 +375,17 @@ html, body {
   border-left: 4px solid var(--primary, #1e8e3e);
   padding-left: 8px;
 }
+
+.field-group {
+  margin-bottom: 12px;
+}
+
+.error-text {
+  color: #d9534f;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.error-input {
+  border: 2px solid #d9534f !important;
+}

@@ -11,7 +11,9 @@ export default function LoanFormPage() {
   const { email } = useSession()
   const [loading, setLoading] = useState(false)
 
-  // Form state
+  // --------------------------
+  // FORM STATE
+  // --------------------------
   const [form, setForm] = useState({
     no_of_dependents: '',
     education: '',
@@ -26,78 +28,99 @@ export default function LoanFormPage() {
     bank_asset_value: '',
   })
 
-  // Read mode
-  const mode =
-    (typeof window !== 'undefined' &&
-      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+  // --------------------------
+  // INLINE ERRORS
+  // --------------------------
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
+
+  const validateField = (name: string, value: string) => {
+    let message = ''
+
+    switch (name) {
+      case 'income_annum':
+        if (Number(value) < 0) message = 'Income must be 0 or greater.'
+        break
+
+      case 'loan_amount':
+        if (Number(value) < 0) message = 'Loan amount must be 0 or greater.'
+        break
+
+      case 'loan_term':
+        if (Number(value) < 1 || Number(value) > 12)
+          message = 'Loan term must be between 1 and 12 months.'
+        break
+
+      case 'cibil_score':
+        if (Number(value) < 300 || Number(value) > 900)
+          message = 'Credit score must be between 300 and 900.'
+        break
+
+      case 'no_of_dependents':
+      case 'residential_assets_value':
+      case 'commercial_assets_value':
+      case 'luxury_assets_value':
+      case 'bank_asset_value':
+        if (Number(value) < 0) message = 'Value cannot be negative.'
+        break
+    }
+
+    setErrors(prev => ({ ...prev, [name]: message }))
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target
-    setForm(prev => ({
-      ...prev,
-      [name]: value,
-    }))
+
+    setForm(prev => ({ ...prev, [name]: value }))
+    validateField(name, value)
   }
+
+  // MODE
+  const mode =
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+
+  // --------------------------
+  // CAN SUBMIT?
+  // --------------------------
+  const hasErrors = Object.values(errors).some(msg => msg.length > 0)
+  const missingRequired = Object.values(form).some(v => v === '')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const income = Number(form.income_annum)
-    const loan = Number(form.loan_amount)
-    const term = Number(form.loan_term)
-    const score = Number(form.cibil_score)
-
-    if (income < 0 || loan < 0) {
-      alert('Income and loan amount must be 0 or greater.')
-      return
-    }
-    if (term < 1 || term > 12) {
-      alert('Repayment duration must be between 1 and 12 months.')
-      return
-    }
-    if (score < 300 || score > 900) {
-      alert('Credit Score must be between 300 and 900.')
+    if (hasErrors || missingRequired) {
+      alert('Please fix the errors before submitting.')
       return
     }
 
     setLoading(true)
+
     try {
+      const payload = {
+        no_of_dependents: Number(form.no_of_dependents),
+        education: Number(form.education),
+        self_employed: Number(form.self_employed),
+        income_annum: Number(form.income_annum),
+        loan_amount: Number(form.loan_amount),
+        loan_term: Number(form.loan_term),
+        cibil_score: Number(form.cibil_score),
+        residential_assets_value: Number(form.residential_assets_value),
+        commercial_assets_value: Number(form.commercial_assets_value),
+        luxury_assets_value: Number(form.luxury_assets_value),
+        bank_asset_value: Number(form.bank_asset_value),
+      }
+
       const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          no_of_dependents: Number(form.no_of_dependents),
-          education: Number(form.education),
-          self_employed: Number(form.self_employed),
-          income_annum: income,
-          loan_amount: loan,
-          loan_term: term,
-          cibil_score: score,
-          residential_assets_value: Number(form.residential_assets_value),
-          commercial_assets_value: Number(form.commercial_assets_value),
-          luxury_assets_value: Number(form.luxury_assets_value),
-          bank_asset_value: Number(form.bank_asset_value),
-        }),
+        body: JSON.stringify(payload),
       })
 
-      // explanation formatting
-      let explanationText = ''
-      if (data.explanation && typeof data.explanation === 'object') {
-        const entries = Object.entries(data.explanation)
-        if (entries.length > 0) {
-          explanationText = entries
-            .map(([f, v]) => `${f}: ${Number(v).toFixed(4)}`)
-            .join('\n')
-        }
-      }
-
-      const botMessage = data.human_message || `Loan Decision: ${data.prediction}`
-
-      // Save chat to Supabase
+      // Save chat
       if (email) {
-        const { error } = await supabase.from('chat_history').insert([
+        await supabase.from('chat_history').insert([
           {
             user_email: email,
             sender: 'user',
@@ -107,26 +130,47 @@ export default function LoanFormPage() {
           {
             user_email: email,
             sender: 'bot',
-            message: botMessage,
+            message: data.human_message || `Loan Decision: ${data.prediction}`,
             variant: mode,
           },
         ])
-        if (error) console.error('❌ Error saving chat:', error)
       }
 
       router.push('/chat')
     } catch (err) {
-      console.error('❌ API Error:', err)
+      console.error(err)
       alert('Error connecting to backend API.')
     } finally {
       setLoading(false)
     }
   }
 
+  // --------------------------
+  // COMPONENT UI
+  // --------------------------
+  const renderField = (
+    label: string,
+    name: string,
+    type: 'number' | 'text' = 'number',
+    props: any = {}
+  ) => (
+    <div className="field-group">
+      <label>{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={(form as any)[name]}
+        onChange={handleChange}
+        className={errors[name] ? 'error-input' : ''}
+        {...props}
+      />
+      {errors[name] && <p className="error-text">{errors[name]}</p>}
+    </div>
+  )
+
   return (
     <main className="page-center">
       <form className="loan-form" onSubmit={handleSubmit}>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1>Loan Application</h1>
           <span
@@ -142,27 +186,14 @@ export default function LoanFormPage() {
           </span>
         </div>
 
-        {/* =======================
-            A. PERSONAL INFORMATION
-            ======================= */}
-        <h2 className="section-title">A. Personal Information</h2>
-
-        <label>No. of Dependents</label>
-        <input
-          type="number"
-          name="no_of_dependents"
-          value={form.no_of_dependents}
-          onChange={handleChange}
-          min="0"
-          required
-        />
-
+        <h2>A. Personal Information</h2>
+        {renderField('No. of Dependents', 'no_of_dependents')}
         <label>Education Level</label>
         <select
           name="education"
           value={form.education}
           onChange={handleChange}
-          required
+          className={errors.education ? 'error-input' : ''}
         >
           <option value="">Select...</option>
           <option value="0">Graduate</option>
@@ -174,120 +205,37 @@ export default function LoanFormPage() {
           name="self_employed"
           value={form.self_employed}
           onChange={handleChange}
-          required
         >
           <option value="">Select...</option>
           <option value="1">Yes</option>
           <option value="0">No</option>
         </select>
 
-        {/* =======================
-            B. LOAN DETAILS
-            ======================= */}
-        <h2 className="section-title">B. Loan Details</h2>
+        <h2>B. Loan Details</h2>
+        {renderField('Annual Income (LKR)', 'income_annum')}
+        {renderField('Loan Amount (LKR)', 'loan_amount')}
+        {renderField('Loan Term (Months)', 'loan_term')}
 
-        <label>Annual Income (LKR)</label>
-        <input
-          type="number"
-          name="income_annum"
-          value={form.income_annum}
-          onChange={handleChange}
-          min="0"
-          required
-        />
+        <h2>C. Credit Information</h2>
+        {renderField('Credit Score (300–900)', 'cibil_score')}
 
-        <label>Loan Amount (LKR)</label>
-        <input
-          type="number"
-          name="loan_amount"
-          value={form.loan_amount}
-          onChange={handleChange}
-          min="0"
-          required
-        />
-
-        <label>Loan Term (Months)</label>
-        <input
-          type="number"
-          name="loan_term"
-          value={form.loan_term}
-          onChange={handleChange}
-          min="1"
-          max="12"
-          required
-        />
-
-        {/* =======================
-            C. CREDIT INFORMATION
-            ======================= */}
-        <h2 className="section-title">C. Credit Information</h2>
-
-        <label>Credit Score (300–900)</label>
-        <input
-          type="number"
-          name="cibil_score"
-          value={form.cibil_score}
-          onChange={handleChange}
-          min="300"
-          max="900"
-          required
-        />
-
-        {/* =======================
-            D. ASSETS
-            ======================= */}
-        <h2 className="section-title">D. Assets</h2>
-
-        <label>Residential Assets (LKR)</label>
-        <input
-          type="number"
-          name="residential_assets_value"
-          value={form.residential_assets_value}
-          onChange={handleChange}
-          min="0"
-          required
-        />
-
-        <label>Commercial Assets (LKR)</label>
-        <input
-          type="number"
-          name="commercial_assets_value"
-          value={form.commercial_assets_value}
-          onChange={handleChange}
-          min="0"
-          required
-        />
-
-        <label>Luxury Assets (LKR)</label>
-        <input
-          type="number"
-          name="luxury_assets_value"
-          value={form.luxury_assets_value}
-          onChange={handleChange}
-          min="0"
-          required
-        />
-
-        <label>Bank Assets (LKR)</label>
-        <input
-          type="number"
-          name="bank_asset_value"
-          value={form.bank_asset_value}
-          onChange={handleChange}
-          min="0"
-          required
-        />
+        <h2>D. Assets</h2>
+        {renderField('Residential Assets (LKR)', 'residential_assets_value')}
+        {renderField('Commercial Assets (LKR)', 'commercial_assets_value')}
+        {renderField('Luxury Assets (LKR)', 'luxury_assets_value')}
+        {renderField('Bank Assets (LKR)', 'bank_asset_value')}
 
         <div className="actions">
-          <button
-            type="button"
-            onClick={() => router.push('/chat')}
-            className="button secondary"
-          >
+          <button type="button" onClick={() => router.push('/chat')} className="button secondary">
             Back
           </button>
-          <button type="submit" className="button primary" disabled={loading}>
-            {loading ? 'Analyzing...' : 'Submit'}
+
+          <button
+            type="submit"
+            className="button primary"
+            disabled={loading || hasErrors || missingRequired}
+          >
+            {loading ? 'Analyzing…' : 'Submit'}
           </button>
         </div>
       </form>
