@@ -9,21 +9,28 @@ import { apiFetch } from '@/lib/apiClient'
 /* ============================================================
    TOOLTIP LABEL WITH REQUIRED ASTERISK
    ============================================================ */
-const Label = ({ children, tip, required }) => (
-  <label style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+const Label = ({ children, tip, required }: { children: React.ReactNode; tip: string; required?: boolean }) => (
+  <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
     {children}
     {required && <span className="required-star">*</span>}
-    <span className="tooltip-icon">ⓘ
+    <span className="tooltip-icon">
+      ⓘ
       <span className="tooltip-text">{tip}</span>
     </span>
   </label>
-);
+)
 
 /* ============================================================
    STEP COMPONENTS
    ============================================================ */
 
-function Step1({ form, handleChange }) {
+function Step1({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched
+}: any) {
   return (
     <>
       <p>Step 1 of 5</p>
@@ -38,12 +45,29 @@ function Step1({ form, handleChange }) {
         name="no_of_dependents"
         value={form.no_of_dependents}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.no_of_dependents && inlineErrors.no_of_dependents
+            ? 'error-input'
+            : ''
+        }
       />
+      {touched.no_of_dependents && inlineErrors.no_of_dependents && (
+        <p className="error-text">{inlineErrors.no_of_dependents}</p>
+      )}
 
       <Label tip="Higher education improves creditworthiness." required>
         Education
       </Label>
-      <select name="education" value={form.education} onChange={handleChange}>
+      <select
+        name="education"
+        value={form.education}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.education && inlineErrors.education ? 'error-input' : ''
+        }
+      >
         <option value="">Select education</option>
         <option value="0">Graduate</option>
         <option value="1">Not Graduate</option>
@@ -56,6 +80,12 @@ function Step1({ form, handleChange }) {
         name="self_employed"
         value={form.self_employed}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.self_employed && inlineErrors.self_employed
+            ? 'error-input'
+            : ''
+        }
       >
         <option value="">Select option</option>
         <option value="1">Yes</option>
@@ -65,7 +95,15 @@ function Step1({ form, handleChange }) {
   )
 }
 
-function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
+function Step2({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched,
+  dti,
+  ratioColor
+}: any) {
   return (
     <>
       <p>Step 2 of 5</p>
@@ -80,8 +118,16 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
         name="income_annum"
         value={form.income_annum}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.income_annum && inlineErrors.income_annum
+            ? 'error-input'
+            : ''
+        }
       />
-      {inlineErrors.income_annum && <p className="error">{inlineErrors.income_annum}</p>}
+      {touched.income_annum && inlineErrors.income_annum && (
+        <p className="error-text">Annual income must be greater than 0.</p>
+      )}
 
       <Label tip="The amount you are requesting to borrow." required>
         Loan Amount (LKR)
@@ -92,8 +138,14 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
         name="loan_amount"
         value={form.loan_amount}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''
+        }
       />
-      {inlineErrors.loan_amount && <p className="error">{inlineErrors.loan_amount}</p>}
+      {touched.loan_amount && inlineErrors.loan_amount && (
+        <p className="error-text">Loan amount must be greater than 0.</p>
+      )}
 
       <Label tip="Shorter terms reduce risk for lenders." required>
         Loan Term (Months)
@@ -104,8 +156,14 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
         name="loan_term"
         value={form.loan_term}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''
+        }
       />
-      {inlineErrors.loan_term && <p className="error">{inlineErrors.loan_term}</p>}
+      {touched.loan_term && inlineErrors.loan_term && (
+        <p className="error-text">Loan term must be 1–12 months.</p>
+      )}
 
       <div className="insights-card">
         <div className="insight">
@@ -120,7 +178,12 @@ function Step2({ form, handleChange, inlineErrors, dti, ratioColor }) {
   )
 }
 
-function Step3({ form, handleChange, cibilCategory }) {
+function Step3({
+  form,
+  handleChange,
+  handleBlur,
+  cibilCategory
+}: any) {
   return (
     <>
       <p>Step 3 of 5</p>
@@ -136,6 +199,7 @@ function Step3({ form, handleChange, cibilCategory }) {
         name="cibil_score"
         value={form.cibil_score}
         onChange={handleChange}
+        onBlur={handleBlur}
       />
 
       <div className="insights-card">
@@ -152,65 +216,98 @@ function Step3({ form, handleChange, cibilCategory }) {
 function Step4({
   form,
   handleChange,
+  handleBlur,
   inlineErrors,
-  income,
-  loan,
-  totalAssets,
-  dti,
+  touched,
   lta,
-  cibilCategory,
   ratioColor
-}) {
+}: any) {
   return (
     <>
-      <h2>Step 4 of 5 — Asset Information</h2>
+      <p>Step 4 of 5</p>
+      <h2>Asset Information</h2>
 
       <Label tip="Value of houses or apartments." required>
         Residential Assets
       </Label>
       <input
-        placeholder="e.g., 3000000"
         name="residential_assets_value"
+        placeholder="e.g., 3000000"
         value={form.residential_assets_value}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.residential_assets_value &&
+          inlineErrors.residential_assets_value
+            ? 'error-input'
+            : ''
+        }
       />
-      {inlineErrors.res && <p className="error">{inlineErrors.res}</p>}
+      {touched.residential_assets_value &&
+        inlineErrors.residential_assets_value && (
+          <p className="error-text">{inlineErrors.residential_assets_value}</p>
+        )}
 
-      <Label tip="Value of shops, offices, or commercial buildings." required>
+      <Label tip="Value of shops, offices." required>
         Commercial Assets
       </Label>
       <input
-        placeholder="e.g., 0"
         name="commercial_assets_value"
+        placeholder="e.g., 0"
         value={form.commercial_assets_value}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.commercial_assets_value &&
+          inlineErrors.commercial_assets_value
+            ? 'error-input'
+            : ''
+        }
       />
-      {inlineErrors.com && <p className="error">{inlineErrors.com}</p>}
+      {touched.commercial_assets_value &&
+        inlineErrors.commercial_assets_value && (
+          <p className="error-text">{inlineErrors.commercial_assets_value}</p>
+        )}
 
-      <Label tip="Cars, jewelry, high-value items." required>
+      <Label tip="Cars, jewelry, gold." required>
         Luxury Assets
       </Label>
       <input
-        placeholder="e.g., 0"
         name="luxury_assets_value"
+        placeholder="e.g., 0"
         value={form.luxury_assets_value}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.luxury_assets_value && inlineErrors.luxury_assets_value
+            ? 'error-input'
+            : ''
+        }
       />
-      {inlineErrors.lux && <p className="error">{inlineErrors.lux}</p>}
+      {touched.luxury_assets_value && inlineErrors.luxury_assets_value && (
+        <p className="error-text">{inlineErrors.luxury_assets_value}</p>
+      )}
 
-      <Label tip="Savings, deposits, bank balances." required>
+      <Label tip="Savings and bank balances." required>
         Bank Assets
       </Label>
       <input
-        placeholder="e.g., 200000"
         name="bank_asset_value"
+        placeholder="e.g., 200000"
         value={form.bank_asset_value}
         onChange={handleChange}
+        onBlur={handleBlur}
+        className={
+          touched.bank_asset_value && inlineErrors.bank_asset_value
+            ? 'error-input'
+            : ''
+        }
       />
-      {inlineErrors.bank && <p className="error">{inlineErrors.bank}</p>}
+      {touched.bank_asset_value && inlineErrors.bank_asset_value && (
+        <p className="error-text">{inlineErrors.bank_asset_value}</p>
+      )}
 
-      {/* Asset Strength */}
-      <h3 style={{ marginTop: "1.5rem" }}>Asset Strength</h3>
+      <h3 style={{ marginTop: '1.5rem' }}>Asset Strength</h3>
 
       <div className="insights-card">
         <div className="insight">
@@ -222,7 +319,7 @@ function Step4({
         </div>
       </div>
     </>
-  );
+  )
 }
 
 function Step5({
@@ -234,21 +331,29 @@ function Step5({
   form,
   cibilCategory,
   ratioColor
-}) {
+}: any) {
   return (
     <>
       <p>Final Step</p>
       <h2>Review Your Application</h2>
 
       <div className="summary-card">
-        <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
-        <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
-        <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
-
-        <p><b>Debt-to-Income Ratio:</b> {(dti * 100).toFixed(1)}%</p>
+        <p>
+          <b>Annual Income:</b> Rs. {income.toLocaleString()}
+        </p>
+        <p>
+          <b>Loan Amount:</b> Rs. {loan.toLocaleString()}
+        </p>
+        <p>
+          <b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}
+        </p>
 
         <p>
-          <b>Loan-to-Asset Ratio:</b>{" "}
+          <b>Debt-to-Income Ratio:</b> {(dti * 100).toFixed(1)}%
+        </p>
+
+        <p>
+          <b>Loan-to-Asset Ratio:</b>{' '}
           <span style={{ color: ratioColor(lta, 40, 80) }}>
             {(lta * 100).toFixed(1)}%
           </span>
@@ -259,12 +364,8 @@ function Step5({
         </p>
       </div>
     </>
-  );
+  )
 }
-
-/* ============================================================
-   MAIN COMPONENT
-   ============================================================ */
 
 /* ============================================================
    MAIN COMPONENT
@@ -273,6 +374,7 @@ function Step5({
 export default function LoanFormPage() {
   const router = useRouter()
   const { email } = useSession()
+
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
   const totalSteps = 5
@@ -291,13 +393,26 @@ export default function LoanFormPage() {
     bank_asset_value: ''
   })
 
+  // track touched fields
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
   const mode =
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
 
-  const handleChange = (e) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name } = e.target
+    setTouched(prev => ({ ...prev, [name]: true }))
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+
+    // mark as touched once user starts typing/selecting
+    if (value !== '') {
+      setTouched(prev => ({ ...prev, [name]: true }))
+    }
   }
 
   /* Calculations */
@@ -319,62 +434,106 @@ export default function LoanFormPage() {
     return 'Excellent'
   }, [form.cibil_score])
 
-  /* Inline errors */
-  const inlineErrors = {}
-  if (step === 2) {
-    if (income <= 0) inlineErrors.income_annum = 'Annual income must be greater than 0.'
-    if (loan <= 0) inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
-    if (form.loan_term < 1 || form.loan_term > 12)
-      inlineErrors.loan_term = 'Loan term must be 1–12 months.'
-  }
-
-  if (step === 4) {
-    if (!form.residential_assets_value) inlineErrors.res = 'Required'
-    if (!form.commercial_assets_value) inlineErrors.com = 'Required'
-    if (!form.luxury_assets_value) inlineErrors.lux = 'Required'
-    if (!form.bank_asset_value) inlineErrors.bank = 'Required'
-  }
-
-  /* Next validation */
-  const canNext = () => {
-    if (step === 1)
-      return (
-        form.no_of_dependents !== '' &&
-        form.education !== '' &&
-        form.self_employed !== ''
-      )
-
-    if (step === 2)
-      return (
-        income > 0 &&
-        loan > 0 &&
-        form.loan_term >= 1 &&
-        Object.keys(inlineErrors).length === 0
-      )
-
-    if (step === 4)
-      return (
-        form.residential_assets_value !== '' &&
-        form.commercial_assets_value !== '' &&
-        form.luxury_assets_value !== '' &&
-        form.bank_asset_value !== ''
-      )
-
-    return true
-  }
-
-  /* Color helper */
-  const ratioColor = (ratio, good, warn) => {
+  /* ratioColor */
+  const ratioColor = (ratio: number, good: number, warn: number) => {
     if (ratio * 100 < good) return '#1e8e3e'
     if (ratio * 100 < warn) return '#f0ad4e'
     return '#d9534f'
   }
 
+  /* Inline errors (strings) */
+  const inlineErrors: Record<string, string> = {}
+
+  // Step 1: dependents 0–30
+  if (step === 1) {
+    if (form.no_of_dependents !== '') {
+      const deps = Number(form.no_of_dependents)
+      if (Number.isNaN(deps) || deps < 0 || deps > 30) {
+        inlineErrors.no_of_dependents = 'Dependents must be between 0 and 30.'
+      }
+    }
+    if (form.education === '') {
+      inlineErrors.education = 'Required'
+    }
+    if (form.self_employed === '') {
+      inlineErrors.self_employed = 'Required'
+    }
+  }
+
+  // Step 2: income / loan / term
+  if (step === 2) {
+    if (income <= 0) inlineErrors.income_annum = 'Annual income must be greater than 0.'
+    if (loan <= 0) inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
+    const lt = Number(form.loan_term)
+    if (Number.isNaN(lt) || lt < 1 || lt > 12) {
+      inlineErrors.loan_term = 'Loan term must be 1–12 months.'
+    }
+  }
+
+  // Step 4: assets (A3 — only negative values get inline errors)
+  if (step === 4) {
+    if (form.residential_assets_value !== '' && Number(form.residential_assets_value) < 0) {
+      inlineErrors.residential_assets_value = 'Value cannot be negative.'
+    }
+    if (form.commercial_assets_value !== '' && Number(form.commercial_assets_value) < 0) {
+      inlineErrors.commercial_assets_value = 'Value cannot be negative.'
+    }
+    if (form.luxury_assets_value !== '' && Number(form.luxury_assets_value) < 0) {
+      inlineErrors.luxury_assets_value = 'Value cannot be negative.'
+    }
+    if (form.bank_asset_value !== '' && Number(form.bank_asset_value) < 0) {
+      inlineErrors.bank_asset_value = 'Value cannot be negative.'
+    }
+  }
+
+  /* Next button logic */
+  const canNext = () => {
+    if (step === 1) {
+      return (
+        form.no_of_dependents !== '' &&
+        !inlineErrors.no_of_dependents &&
+        form.education !== '' &&
+        form.self_employed !== ''
+      )
+    }
+
+    if (step === 2) {
+      return (
+        income > 0 &&
+        loan > 0 &&
+        Number(form.loan_term) >= 1 &&
+        Object.keys(inlineErrors).length === 0
+      )
+    }
+
+    if (step === 4) {
+      const resVal = form.residential_assets_value
+      const comVal = form.commercial_assets_value
+      const luxVal = form.luxury_assets_value
+      const bankVal = form.bank_asset_value
+
+      const allFilled =
+        resVal !== '' &&
+        comVal !== '' &&
+        luxVal !== '' &&
+        bankVal !== ''
+
+      const allNonNegative =
+        Number(resVal) >= 0 &&
+        Number(comVal) >= 0 &&
+        Number(luxVal) >= 0 &&
+        Number(bankVal) >= 0
+
+      return allFilled && allNonNegative
+    }
+
+    return true
+  }
+
   /* Submit */
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
     try {
       const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
@@ -419,13 +578,13 @@ export default function LoanFormPage() {
     }
   }
 
+  /* RENDER */
   return (
     <main className="page-center">
       <form className="loan-form" onSubmit={handleSubmit}>
-
         {/* Step Indicators */}
         <div style={{ marginBottom: '1rem', display: 'flex', gap: '8px' }}>
-          {[1, 2, 3, 4].map(n => (
+          {[1, 2, 3, 4, 5].map(n => (
             <div
               key={n}
               style={{
@@ -439,49 +598,61 @@ export default function LoanFormPage() {
         </div>
 
         {/* Steps */}
-        {step === 1 && <Step1 form={form} handleChange={handleChange} />}
+        {step === 1 && (
+          <Step1
+            form={form}
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            inlineErrors={inlineErrors}
+            touched={touched}
+          />
+        )}
+
         {step === 2 && (
           <Step2
             form={form}
             handleChange={handleChange}
+            handleBlur={handleBlur}
             inlineErrors={inlineErrors}
+            touched={touched}
             dti={dti}
             ratioColor={ratioColor}
           />
         )}
+
         {step === 3 && (
           <Step3
             form={form}
             handleChange={handleChange}
+            handleBlur={handleBlur}
             cibilCategory={cibilCategory}
           />
         )}
+
         {step === 4 && (
           <Step4
             form={form}
             handleChange={handleChange}
+            handleBlur={handleBlur}
             inlineErrors={inlineErrors}
+            touched={touched}
+            lta={lta}
+            ratioColor={ratioColor}
+          />
+        )}
+
+        {step === 5 && (
+          <Step5
             income={income}
             loan={loan}
             totalAssets={totalAssets}
             dti={dti}
             lta={lta}
+            form={form}
             cibilCategory={cibilCategory}
             ratioColor={ratioColor}
           />
         )}
-        {step === 5 && (
-  <Step5
-    income={income}
-    loan={loan}
-    totalAssets={totalAssets}
-    dti={dti}
-    lta={lta}
-    form={form}
-    cibilCategory={cibilCategory}
-    ratioColor={ratioColor}
-  />
-)}
 
         {/* Buttons */}
         <div className="actions">
