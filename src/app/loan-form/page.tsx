@@ -16,7 +16,7 @@ interface LoanFormType {
   income_annum: string
   loan_amount: string
   loan_term: number | string
-  cibil_score: number
+  cibil_score: number | string
   residential_assets_value: string
   commercial_assets_value: string
   luxury_assets_value: string
@@ -25,8 +25,12 @@ interface LoanFormType {
 
 interface StepProps {
   form: LoanFormType
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
-  handleBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void
+  handleBlur: (
+    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void
   inlineErrors: Record<string, string>
   touched: Record<string, boolean>
   dti?: number
@@ -38,7 +42,7 @@ interface StepProps {
 /* ============================================================
    PROGRESS BAR
 ============================================================ */
-const steps = ["Personal", "Loan", "Credit", "Assets", "Review"]
+const steps = ['Personal', 'Loan', 'Credit', 'Assets', 'Review']
 
 const ProgressBar = ({ step }: { step: number }) => (
   <div className="progress-wrapper-vertical">
@@ -52,7 +56,7 @@ const ProgressBar = ({ step }: { step: number }) => (
           <div
             className="progress-label-vertical"
             style={{
-              color: isActive ? "var(--text)" : "var(--muted)",
+              color: isActive ? 'var(--text)' : 'var(--muted)',
               fontWeight: isActive ? 600 : 400
             }}
           >
@@ -63,8 +67,10 @@ const ProgressBar = ({ step }: { step: number }) => (
             <div
               className={`progress-circle ${isActive ? 'is-active' : ''}`}
               style={{
-                background: isCompleted || isActive ? "var(--brand)" : "#DCE0DA",
-                color: isCompleted || isActive ? "#fff" : "#6E7C7A"
+                background:
+                  isCompleted || isActive ? 'var(--brand)' : '#DCE0DA',
+                color:
+                  isCompleted || isActive ? '#fff' : '#6E7C7A'
               }}
             >
               {stepNumber}
@@ -74,7 +80,7 @@ const ProgressBar = ({ step }: { step: number }) => (
               <div
                 className="progress-line-vertical"
                 style={{
-                  background: isCompleted ? "var(--brand)" : "#DCE0DA"
+                  background: isCompleted ? 'var(--brand)' : '#DCE0DA'
                 }}
               />
             )}
@@ -111,12 +117,21 @@ const Label = ({
    STEPS
 ============================================================ */
 
-function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepProps) {
+function Step1({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched
+}: StepProps) {
   return (
     <>
       <div className="step-header">
-        <p>Step 1 of 5</p>
         <h2>Personal Information</h2>
+        <p className="step-subtitle">
+          Tell us a bit about your background so we can assess your profile
+          fairly.
+        </p>
       </div>
 
       <div className="form-field">
@@ -130,7 +145,11 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepPr
           value={form.no_of_dependents}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.no_of_dependents && inlineErrors.no_of_dependents ? 'error-input' : ''}
+          className={
+            touched.no_of_dependents && inlineErrors.no_of_dependents
+              ? 'error-input'
+              : ''
+          }
         />
         {touched.no_of_dependents && inlineErrors.no_of_dependents && (
           <p className="error-text">{inlineErrors.no_of_dependents}</p>
@@ -138,7 +157,7 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepPr
       </div>
 
       <div className="form-field">
-        <Label tip="Higher education improves creditworthiness." required>
+        <Label tip="Higher education often improves creditworthiness." required>
           Education
         </Label>
         <select
@@ -146,16 +165,24 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepPr
           value={form.education}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.education && inlineErrors.education ? 'error-input' : ''}
+          className={
+            touched.education && inlineErrors.education ? 'error-input' : ''
+          }
         >
           <option value="">Select education</option>
           <option value="0">Graduate</option>
           <option value="1">Not Graduate</option>
         </select>
+        {touched.education && inlineErrors.education && (
+          <p className="error-text">{inlineErrors.education}</p>
+        )}
       </div>
 
       <div className="form-field">
-        <Label tip="Self-employed applicants may have variable income." required>
+        <Label
+          tip="Self-employed applicants may have more variable income."
+          required
+        >
           Self Employed
         </Label>
         <select
@@ -163,24 +190,46 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepPr
           value={form.self_employed}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.self_employed && inlineErrors.self_employed ? 'error-input' : ''}
+          className={
+            touched.self_employed && inlineErrors.self_employed
+              ? 'error-input'
+              : ''
+          }
         >
           <option value="">Select option</option>
           <option value="1">Yes</option>
           <option value="0">No</option>
         </select>
+        {touched.self_employed && inlineErrors.self_employed && (
+          <p className="error-text">{inlineErrors.self_employed}</p>
+        )}
       </div>
     </>
   )
 }
 
-function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, ratioColor }: StepProps) {
+function Step2({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched,
+  dti,
+  ratioColor
+}: StepProps) {
+  const dtiPercent = (dti ?? 0) * 100
+  const dtiClamped = Math.max(0, Math.min(dtiPercent, 120))
+
   return (
     <>
       <div className="step-header">
-        <p>Step 2 of 5</p>
         <h2>Loan Details</h2>
+        <p className="step-subtitle">
+          We use your income and loan size to understand your repayment
+          capacity.
+        </p>
       </div>
+
       <div className="form-field">
         <Label tip="Your total yearly income before tax." required>
           Annual Income
@@ -192,7 +241,11 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
           value={form.income_annum}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.income_annum && inlineErrors.income_annum ? 'error-input' : ''}
+          className={
+            touched.income_annum && inlineErrors.income_annum
+              ? 'error-input'
+              : ''
+          }
         />
         {touched.income_annum && inlineErrors.income_annum && (
           <p className="error-text">{inlineErrors.income_annum}</p>
@@ -210,7 +263,11 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
           value={form.loan_amount}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''}
+          className={
+            touched.loan_amount && inlineErrors.loan_amount
+              ? 'error-input'
+              : ''
+          }
         />
         {touched.loan_amount && inlineErrors.loan_amount && (
           <p className="error-text">{inlineErrors.loan_amount}</p>
@@ -228,7 +285,9 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
           value={form.loan_term}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''}
+          className={
+            touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''
+          }
         />
         {touched.loan_term && inlineErrors.loan_term && (
           <p className="error-text">{inlineErrors.loan_term}</p>
@@ -238,36 +297,56 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
       <div className="insights-card">
         <div className="insight">
           <div className="label">Debt-to-Income Ratio</div>
-          <div className="value" style={{ color: ratioColor?.(dti ?? 0, 40, 60) }}>
-            {((dti ?? 0) * 100).toFixed(1)}%
+          <div
+            className="value"
+            style={{ color: ratioColor?.(dti ?? 0, 40, 60) }}
+          >
+            {dtiPercent.toFixed(1)}%
           </div>
           <div className="note">Ideal: Under 40%</div>
+
+          {/* Animated ratio bar */}
+          <div className="ratio-bar">
+            <div
+              className="ratio-bar-fill"
+              style={{ width: `${dtiClamped}%` }}
+            />
+          </div>
         </div>
       </div>
     </>
   )
 }
 
-function Step3({ form, handleChange, handleBlur, cibilCategory }: StepProps) {
+function Step3({
+  form,
+  handleChange,
+  handleBlur,
+  cibilCategory
+}: StepProps) {
   return (
     <>
       <div className="step-header">
-        <p>Step 3 of 5</p>
         <h2>Credit Score Insights</h2>
+        <p className="step-subtitle">
+          Your credit score helps us estimate your past repayment behaviour.
+        </p>
       </div>
 
-      <Label tip="Higher score increases approval chances.">
-        Credit Score: {form.cibil_score} ({cibilCategory})
-      </Label>
-      <input
-        type="range"
-        min="300"
-        max="900"
-        name="cibil_score"
-        value={form.cibil_score}
-        onChange={handleChange}
-        onBlur={handleBlur}
-      />
+      <div className="form-field">
+        <Label tip="Higher score increases approval chances.">
+          Credit Score: {form.cibil_score} ({cibilCategory})
+        </Label>
+        <input
+          type="range"
+          min="300"
+          max="900"
+          name="cibil_score"
+          value={form.cibil_score}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+      </div>
 
       <div className="insights-card">
         <div className="insight">
@@ -280,13 +359,27 @@ function Step3({ form, handleChange, handleBlur, cibilCategory }: StepProps) {
   )
 }
 
-function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, ratioColor }: StepProps) {
+function Step4({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched,
+  lta,
+  ratioColor
+}: StepProps) {
+  const ltaPercent = (lta ?? 0) * 100
+  const ltaClamped = Math.max(0, Math.min(ltaPercent, 120))
+
   return (
     <>
       <div className="step-header">
-        <p>Step 4 of 5</p>
         <h2>Asset Information</h2>
+        <p className="step-subtitle">
+          Your assets strengthen your overall profile and reduce risk.
+        </p>
       </div>
+
       <div className="form-field">
         <Label tip="Value of your house or apartment." required>
           Residential Assets
@@ -298,14 +391,18 @@ function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, rat
           onChange={handleChange}
           onBlur={handleBlur}
           className={
-            touched.residential_assets_value && inlineErrors.residential_assets_value
+            touched.residential_assets_value &&
+            inlineErrors.residential_assets_value
               ? 'error-input'
               : ''
           }
         />
-        {touched.residential_assets_value && inlineErrors.residential_assets_value && (
-          <p className="error-text">{inlineErrors.residential_assets_value}</p>
-        )}
+        {touched.residential_assets_value &&
+          inlineErrors.residential_assets_value && (
+            <p className="error-text">
+              {inlineErrors.residential_assets_value}
+            </p>
+          )}
       </div>
 
       <div className="form-field">
@@ -319,14 +416,18 @@ function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, rat
           onChange={handleChange}
           onBlur={handleBlur}
           className={
-            touched.commercial_assets_value && inlineErrors.commercial_assets_value
+            touched.commercial_assets_value &&
+            inlineErrors.commercial_assets_value
               ? 'error-input'
               : ''
           }
         />
-        {touched.commercial_assets_value && inlineErrors.commercial_assets_value && (
-          <p className="error-text">{inlineErrors.commercial_assets_value}</p>
-        )}
+        {touched.commercial_assets_value &&
+          inlineErrors.commercial_assets_value && (
+            <p className="error-text">
+              {inlineErrors.commercial_assets_value}
+            </p>
+          )}
       </div>
 
       <div className="form-field">
@@ -340,14 +441,18 @@ function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, rat
           onChange={handleChange}
           onBlur={handleBlur}
           className={
-            touched.luxury_assets_value && inlineErrors.luxury_assets_value
+            touched.luxury_assets_value &&
+            inlineErrors.luxury_assets_value
               ? 'error-input'
               : ''
           }
         />
-        {touched.luxury_assets_value && inlineErrors.luxury_assets_value && (
-          <p className="error-text">{inlineErrors.luxury_assets_value}</p>
-        )}
+        {touched.luxury_assets_value &&
+          inlineErrors.luxury_assets_value && (
+            <p className="error-text">
+              {inlineErrors.luxury_assets_value}
+            </p>
+          )}
       </div>
 
       <div className="form-field">
@@ -376,10 +481,21 @@ function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, rat
       <div className="insights-card">
         <div className="insight">
           <div className="label">Loan-to-Asset Ratio</div>
-          <div className="value" style={{ color: ratioColor?.(lta ?? 0, 40, 80) }}>
-            {((lta ?? 0) * 100).toFixed(1)}%
+          <div
+            className="value"
+            style={{ color: ratioColor?.(lta ?? 0, 40, 80) }}
+          >
+            {ltaPercent.toFixed(1)}%
           </div>
           <div className="note">Ideal: Under 80%</div>
+
+          {/* Animated ratio bar */}
+          <div className="ratio-bar">
+            <div
+              className="ratio-bar-fill"
+              style={{ width: `${ltaClamped}%` }}
+            />
+          </div>
         </div>
       </div>
     </>
@@ -405,25 +521,43 @@ function Step5({
   cibilCategory: string
   ratioColor: (ratio: number, good: number, warn: number) => string
 }) {
+  const dtiPercent = dti * 100
+  const ltaPercent = lta * 100
+
   return (
     <>
       <div className="step-header">
-        <p>Final Step</p>
         <h2>Review Your Application</h2>
+        <p className="step-subtitle">
+          Double-check your details before we send this to the loan engine.
+        </p>
       </div>
 
       <div className="summary-card">
-        <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
-        <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
-        <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
-        <p><b>DTI Ratio:</b> {(dti * 100).toFixed(1)}%</p>
+        <p>
+          <b>Annual Income:</b> Rs. {income.toLocaleString()}
+        </p>
+        <p>
+          <b>Loan Amount:</b> Rs. {loan.toLocaleString()}
+        </p>
+        <p>
+          <b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}
+        </p>
+
+        <p>
+          <b>DTI Ratio:</b> {dtiPercent.toFixed(1)}%
+        </p>
+
         <p>
           <b>LTA Ratio:</b>{' '}
           <span style={{ color: ratioColor(lta, 40, 80) }}>
-            {(lta * 100).toFixed(1)}%
+            {ltaPercent.toFixed(1)}%
           </span>
         </p>
-        <p><b>Credit Score:</b> {form.cibil_score} ({cibilCategory})</p>
+
+        <p>
+          <b>Credit Score:</b> {form.cibil_score} ({cibilCategory})
+        </p>
       </div>
     </>
   )
@@ -441,12 +575,23 @@ export default function LoanFormPage() {
   const [step, setStep] = useState(1)
   const totalSteps = 5
 
-  /* Auto-scroll top */
+  // For nicer animations (forward/back)
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward')
+
+  /* Auto-scroll top + subtle haptic cue on step change */
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate?.(20)
+      } catch {
+        // ignore if not supported
+      }
+    }
   }, [step])
 
-  /* Swipe-back gesture */
+  /* Swipe-back gesture (mobile) */
   useEffect(() => {
     let startX = 0
 
@@ -457,7 +602,8 @@ export default function LoanFormPage() {
     const touchEnd = (e: TouchEvent) => {
       const endX = e.changedTouches[0].clientX
       if (startX < 40 && endX - startX > 80 && step > 1) {
-        setStep(step - 1)
+        setDirection('backward')
+        setStep(prev => Math.max(1, prev - 1))
       }
     }
 
@@ -468,7 +614,7 @@ export default function LoanFormPage() {
       window.removeEventListener('touchstart', touchStart)
       window.removeEventListener('touchend', touchEnd)
     }
-  }, [step])
+  }, [step, setStep])
 
   /* Form state */
   const [form, setForm] = useState<LoanFormType>({
@@ -491,12 +637,16 @@ export default function LoanFormPage() {
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'baseline' | 'xai')) || 'xai'
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (value !== '') {
@@ -518,14 +668,16 @@ export default function LoanFormPage() {
   const lta = totalAssets ? loan / totalAssets : 0
 
   const cibilCategory = useMemo(() => {
-    if (form.cibil_score < 600) return 'Poor'
-    if (form.cibil_score < 750) return 'Fair'
+    const score = Number(form.cibil_score) || 0
+    if (score < 600) return 'Poor'
+    if (score < 750) return 'Fair'
     return 'Excellent'
   }, [form.cibil_score])
 
   const ratioColor = (ratio: number, good: number, warn: number) => {
-    if (ratio * 100 < good) return '#1e8e3e'
-    if (ratio * 100 < warn) return '#f0ad4e'
+    const percent = ratio * 100
+    if (percent < good) return '#1e8e3e'
+    if (percent < warn) return '#f0ad4e'
     return '#d9534f'
   }
 
@@ -534,17 +686,21 @@ export default function LoanFormPage() {
 
   if (step === 1) {
     const deps = Number(form.no_of_dependents)
-    if (form.no_of_dependents !== '' && (deps < 0 || deps > 30))
+    if (form.no_of_dependents !== '' && (deps < 0 || deps > 30)) {
       inlineErrors.no_of_dependents = 'Dependents must be between 0 and 30.'
+    }
     if (form.education === '') inlineErrors.education = 'Required'
     if (form.self_employed === '') inlineErrors.self_employed = 'Required'
   }
 
   if (step === 2) {
-    if (income <= 0) inlineErrors.income_annum = 'Annual income must be greater than 0.'
-    if (loan <= 0) inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
+    if (income <= 0)
+      inlineErrors.income_annum = 'Annual income must be greater than 0.'
+    if (loan <= 0)
+      inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
     const lt = Number(form.loan_term)
-    if (lt < 1 || lt > 12) inlineErrors.loan_term = 'Loan term must be 1–12 months.'
+    if (lt < 1 || lt > 12)
+      inlineErrors.loan_term = 'Loan term must be 1–12 months.'
   }
 
   if (step === 4) {
@@ -640,12 +796,18 @@ export default function LoanFormPage() {
   /* RENDER */
   return (
     <main className="page-center">
-      <a href="/chat" className="back-to-chat-btn">← Back to Chat</a>
+      <a href="/chat" className="back-to-chat-btn">
+        ← Back to Chat
+      </a>
 
       <form className="loan-form" onSubmit={handleSubmit}>
         <ProgressBar step={step} />
 
-        <div className="step-animation">
+        <div
+          className={`step-animation ${
+            direction === 'forward' ? 'step-forward' : 'step-backward'
+          }`}
+        >
           {step === 1 && (
             <Step1
               form={form}
@@ -708,7 +870,10 @@ export default function LoanFormPage() {
             <button
               type="button"
               className="button secondary"
-              onClick={() => setStep(step - 1)}
+              onClick={() => {
+                setDirection('backward')
+                setStep(prev => prev - 1)
+              }}
             >
               Back
             </button>
@@ -719,7 +884,10 @@ export default function LoanFormPage() {
               type="button"
               className="button primary"
               disabled={!canNext()}
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                setDirection('forward')
+                setStep(prev => prev + 1)
+              }}
             >
               Next
             </button>
