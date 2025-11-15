@@ -7,7 +7,7 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
 
 /* ============================================================
-   TYPES (Fixes all "any" errors)
+   TYPES
 ============================================================ */
 interface LoanFormType {
   no_of_dependents: string
@@ -38,18 +38,17 @@ interface StepProps {
 /* ============================================================
    PROGRESS BAR
 ============================================================ */
-const steps = ["Personal", "Loan", "Credit", "Assets", "Review"];
+const steps = ["Personal", "Loan", "Credit", "Assets", "Review"]
 
 const ProgressBar = ({ step }: { step: number }) => (
   <div className="progress-wrapper-vertical">
     {steps.map((label, index) => {
-      const stepNumber = index + 1;
-      const isActive = stepNumber === step;
-      const isCompleted = stepNumber < step;
+      const stepNumber = index + 1
+      const isActive = stepNumber === step
+      const isCompleted = stepNumber < step
 
       return (
         <div key={index} className="progress-block">
-          {/* Label ABOVE circle */}
           <div
             className="progress-label-vertical"
             style={{
@@ -61,7 +60,6 @@ const ProgressBar = ({ step }: { step: number }) => (
           </div>
 
           <div className="progress-inner">
-            {/* Circle */}
             <div
               className={`progress-circle ${isActive ? 'is-active' : ''}`}
               style={{
@@ -72,7 +70,6 @@ const ProgressBar = ({ step }: { step: number }) => (
               {stepNumber}
             </div>
 
-            {/* Line */}
             {index < steps.length - 1 && (
               <div
                 className="progress-line-vertical"
@@ -83,13 +80,13 @@ const ProgressBar = ({ step }: { step: number }) => (
             )}
           </div>
         </div>
-      );
+      )
     })}
   </div>
-);
+)
 
 /* ============================================================
-   LABEL (Tooltip)
+   LABEL
 ============================================================ */
 const Label = ({
   children,
@@ -100,7 +97,7 @@ const Label = ({
   tip: string
   required?: boolean
 }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+  <label className="tooltip-container">
     {children}
     {required && <span className="required-star">*</span>}
     <span className="tooltip-icon">
@@ -111,141 +108,129 @@ const Label = ({
 )
 
 /* ============================================================
-   STEPS (now fully typed)
+   STEPS
 ============================================================ */
 
-function Step1({
-  form,
-  handleChange,
-  handleBlur,
-  inlineErrors,
-  touched
-}: StepProps) {
+function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepProps) {
   return (
     <>
       <p>Step 1 of 5</p>
       <h2>Personal Information</h2>
 
-      <Label tip="Number of people depending on your income." required>
-        No. of Dependents
-      </Label>
-      <input
-        type="number"
-        name="no_of_dependents"
-        placeholder="e.g., 2"
-        value={form.no_of_dependents}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.no_of_dependents && inlineErrors.no_of_dependents
-            ? 'error-input'
-            : ''
-        }
-      />
-      {touched.no_of_dependents && inlineErrors.no_of_dependents && (
-        <p className="error-text">{inlineErrors.no_of_dependents}</p>
-      )}
+      <div className="form-field">
+        <Label tip="Number of people depending on your income." required>
+          No. of Dependents
+        </Label>
+        <input
+          type="number"
+          name="no_of_dependents"
+          placeholder="e.g., 2"
+          value={form.no_of_dependents}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.no_of_dependents && inlineErrors.no_of_dependents ? 'error-input' : ''}
+        />
+        {touched.no_of_dependents && inlineErrors.no_of_dependents && (
+          <p className="error-text">{inlineErrors.no_of_dependents}</p>
+        )}
+      </div>
 
-      <Label tip="Higher education improves creditworthiness." required>
-        Education
-      </Label>
-      <select
-        name="education"
-        value={form.education}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.education && inlineErrors.education ? 'error-input' : ''
-        }
-      >
-        <option value="">Select education</option>
-        <option value="0">Graduate</option>
-        <option value="1">Not Graduate</option>
-      </select>
+      <div className="form-field">
+        <Label tip="Higher education improves creditworthiness." required>
+          Education
+        </Label>
+        <select
+          name="education"
+          value={form.education}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.education && inlineErrors.education ? 'error-input' : ''}
+        >
+          <option value="">Select education</option>
+          <option value="0">Graduate</option>
+          <option value="1">Not Graduate</option>
+        </select>
+      </div>
 
-      <Label tip="Self-employed applicants may have variable income." required>
-        Self Employed
-      </Label>
-      <select
-        name="self_employed"
-        value={form.self_employed}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.self_employed && inlineErrors.self_employed
-            ? 'error-input'
-            : ''
-        }
-      >
-        <option value="">Select option</option>
-        <option value="1">Yes</option>
-        <option value="0">No</option>
-      </select>
+      <div className="form-field">
+        <Label tip="Self-employed applicants may have variable income." required>
+          Self Employed
+        </Label>
+        <select
+          name="self_employed"
+          value={form.self_employed}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.self_employed && inlineErrors.self_employed ? 'error-input' : ''}
+        >
+          <option value="">Select option</option>
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
     </>
   )
 }
 
-function Step2({
-  form,
-  handleChange,
-  handleBlur,
-  inlineErrors,
-  touched,
-  dti,
-  ratioColor
-}: StepProps) {
+function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, ratioColor }: StepProps) {
   return (
     <>
       <p>Step 2 of 5</p>
       <h2>Loan Details</h2>
 
-      <Label tip="Your total yearly income before tax." required>
-        Annual Income
-      </Label>
-      <input
-        type="number"
-        name="income_annum"
-        placeholder="e.g., 1200000"
-        value={form.income_annum}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={touched.income_annum && inlineErrors.income_annum ? 'error-input' : ''}
-      />
-      {touched.income_annum && inlineErrors.income_annum && (
-        <p className="error-text">Annual income must be greater than 0.</p>
-      )}
+      <div className="form-field">
+        <Label tip="Your total yearly income before tax." required>
+          Annual Income
+        </Label>
+        <input
+          type="number"
+          name="income_annum"
+          placeholder="e.g., 1200000"
+          value={form.income_annum}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.income_annum && inlineErrors.income_annum ? 'error-input' : ''}
+        />
+        {touched.income_annum && inlineErrors.income_annum && (
+          <p className="error-text">{inlineErrors.income_annum}</p>
+        )}
+      </div>
 
-      <Label tip="How much money you want to borrow." required>
-        Loan Amount
-      </Label>
-      <input
-        type="number"
-        name="loan_amount"
-        placeholder="e.g., 500000"
-        value={form.loan_amount}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''}
-      />
-      {touched.loan_amount && inlineErrors.loan_amount && (
-        <p className="error-text">Loan amount must be greater than 0.</p>
-      )}
+      <div className="form-field">
+        <Label tip="How much money you want to borrow." required>
+          Loan Amount
+        </Label>
+        <input
+          type="number"
+          name="loan_amount"
+          placeholder="e.g., 500000"
+          value={form.loan_amount}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.loan_amount && inlineErrors.loan_amount ? 'error-input' : ''}
+        />
+        {touched.loan_amount && inlineErrors.loan_amount && (
+          <p className="error-text">{inlineErrors.loan_amount}</p>
+        )}
+      </div>
 
-      <Label tip="Shorter terms reduce lending risk." required>
-        Loan Term (Months)
-      </Label>
-      <input
-        type="number"
-        name="loan_term"
-        placeholder="1–12"
-        value={form.loan_term}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''}
-      />
-      {touched.loan_term && inlineErrors.loan_term && (
-        <p className="error-text">Loan term must be 1–12 months.</p>
-      )}
+      <div className="form-field">
+        <Label tip="Shorter terms reduce lending risk." required>
+          Loan Term (Months)
+        </Label>
+        <input
+          type="number"
+          name="loan_term"
+          placeholder="1–12"
+          value={form.loan_term}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''}
+        />
+        {touched.loan_term && inlineErrors.loan_term && (
+          <p className="error-text">{inlineErrors.loan_term}</p>
+        )}
+      </div>
 
       <div className="insights-card">
         <div className="insight">
@@ -260,12 +245,7 @@ function Step2({
   )
 }
 
-function Step3({
-  form,
-  handleChange,
-  handleBlur,
-  cibilCategory
-}: StepProps) {
+function Step3({ form, handleChange, handleBlur, cibilCategory }: StepProps) {
   return (
     <>
       <p>Step 3 of 5</p>
@@ -295,99 +275,95 @@ function Step3({
   )
 }
 
-function Step4({
-  form,
-  handleChange,
-  handleBlur,
-  inlineErrors,
-  touched,
-  lta,
-  ratioColor
-}: StepProps) {
+function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, ratioColor }: StepProps) {
   return (
     <>
       <p>Step 4 of 5</p>
       <h2>Asset Information</h2>
 
-      <Label tip="Value of your house or apartment." required>
-        Residential Assets
-      </Label>
-      <input
-        name="residential_assets_value"
-        placeholder="e.g., 3000000"
-        value={form.residential_assets_value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.residential_assets_value &&
-          inlineErrors.residential_assets_value
-            ? 'error-input'
-            : ''
-        }
-      />
-      {touched.residential_assets_value &&
-        inlineErrors.residential_assets_value && (
+      <div className="form-field">
+        <Label tip="Value of your house or apartment." required>
+          Residential Assets
+        </Label>
+        <input
+          name="residential_assets_value"
+          placeholder="e.g., 3000000"
+          value={form.residential_assets_value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={
+            touched.residential_assets_value && inlineErrors.residential_assets_value
+              ? 'error-input'
+              : ''
+          }
+        />
+        {touched.residential_assets_value && inlineErrors.residential_assets_value && (
           <p className="error-text">{inlineErrors.residential_assets_value}</p>
         )}
+      </div>
 
-      <Label tip="Value of shops, offices, commercial property." required>
-        Commercial Assets
-      </Label>
-      <input
-        name="commercial_assets_value"
-        placeholder="e.g., 0"
-        value={form.commercial_assets_value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.commercial_assets_value &&
-          inlineErrors.commercial_assets_value
-            ? 'error-input'
-            : ''
-        }
-      />
-      {touched.commercial_assets_value &&
-        inlineErrors.commercial_assets_value && (
+      <div className="form-field">
+        <Label tip="Value of shops, offices, commercial property." required>
+          Commercial Assets
+        </Label>
+        <input
+          name="commercial_assets_value"
+          placeholder="e.g., 0"
+          value={form.commercial_assets_value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={
+            touched.commercial_assets_value && inlineErrors.commercial_assets_value
+              ? 'error-input'
+              : ''
+          }
+        />
+        {touched.commercial_assets_value && inlineErrors.commercial_assets_value && (
           <p className="error-text">{inlineErrors.commercial_assets_value}</p>
         )}
+      </div>
 
-      <Label tip="Cars, jewelry, gold, valuables." required>
-        Luxury Assets
-      </Label>
-      <input
-        name="luxury_assets_value"
-        placeholder="e.g., 0"
-        value={form.luxury_assets_value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.luxury_assets_value && inlineErrors.luxury_assets_value
-            ? 'error-input'
-            : ''
-        }
-      />
-      {touched.luxury_assets_value && inlineErrors.luxury_assets_value && (
-        <p className="error-text">{inlineErrors.luxury_assets_value}</p>
-      )}
+      <div className="form-field">
+        <Label tip="Cars, jewelry, gold, valuables." required>
+          Luxury Assets
+        </Label>
+        <input
+          name="luxury_assets_value"
+          placeholder="e.g., 0"
+          value={form.luxury_assets_value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={
+            touched.luxury_assets_value && inlineErrors.luxury_assets_value
+              ? 'error-input'
+              : ''
+          }
+        />
+        {touched.luxury_assets_value && inlineErrors.luxury_assets_value && (
+          <p className="error-text">{inlineErrors.luxury_assets_value}</p>
+        )}
+      </div>
 
-      <Label tip="Bank savings, deposits, balances." required>
-        Bank Assets
-      </Label>
-      <input
-        name="bank_asset_value"
-        placeholder="e.g., 200000"
-        value={form.bank_asset_value}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={
-          touched.bank_asset_value && inlineErrors.bank_asset_value
-            ? 'error-input'
-            : ''
-        }
-      />
-      {touched.bank_asset_value && inlineErrors.bank_asset_value && (
-        <p className="error-text">{inlineErrors.bank_asset_value}</p>
-      )}
+      <div className="form-field">
+        <Label tip="Bank savings, deposits, balances." required>
+          Bank Assets
+        </Label>
+        <input
+          name="bank_asset_value"
+          placeholder="e.g., 200000"
+          value={form.bank_asset_value}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={
+            touched.bank_asset_value && inlineErrors.bank_asset_value
+              ? 'error-input'
+              : ''
+          }
+        />
+        {touched.bank_asset_value && inlineErrors.bank_asset_value && (
+          <p className="error-text">{inlineErrors.bank_asset_value}</p>
+        )}
+      </div>
 
       <h3 style={{ marginTop: '1.5rem' }}>Asset Strength</h3>
 
@@ -432,16 +408,13 @@ function Step5({
         <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>
         <p><b>Loan Amount:</b> Rs. {loan.toLocaleString()}</p>
         <p><b>Total Assets:</b> Rs. {totalAssets.toLocaleString()}</p>
-
         <p><b>DTI Ratio:</b> {(dti * 100).toFixed(1)}%</p>
-
         <p>
           <b>LTA Ratio:</b>{' '}
           <span style={{ color: ratioColor(lta, 40, 80) }}>
             {(lta * 100).toFixed(1)}%
           </span>
         </p>
-
         <p><b>Credit Score:</b> {form.cibil_score} ({cibilCategory})</p>
       </div>
     </>
@@ -460,64 +433,36 @@ export default function LoanFormPage() {
   const [step, setStep] = useState(1)
   const totalSteps = 5
 
-   // ✅ Auto scroll to top whenever step changes
+  /* Auto-scroll top */
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }, [step]);
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [step])
 
+  /* Swipe-back gesture */
   useEffect(() => {
-  let touchStartX = 0;
+    let startX = 0
 
-  const handleTouchStart = (e: TouchEvent) => {
-    touchStartX = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    const endX = e.changedTouches[0].clientX;
-
-    if (touchStartX < 40 && endX - touchStartX > 80) {
-      setStep(prev => (prev > 1 ? prev - 1 : prev));
+    const touchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX
     }
-  };
 
-  window.addEventListener('touchstart', handleTouchStart);
-  window.addEventListener('touchend', handleTouchEnd);
-
-  return () => {
-    window.removeEventListener('touchstart', handleTouchStart);
-    window.removeEventListener('touchend', handleTouchEnd);
-  };
-}, []);
-
-  // Mobile swipe-back gesture
-useEffect(() => {
-  let touchStartX = 0;
-
-  const handleTouchStart = (e: TouchEvent) => {
-    touchStartX = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    const endX = e.changedTouches[0].clientX;
-
-    // Swipe from left edge, strong enough
-    if (touchStartX < 40 && endX - touchStartX > 80) {
-      if (step > 1) setStep(prev => prev - 1);
+    const touchEnd = (e: TouchEvent) => {
+      const endX = e.changedTouches[0].clientX
+      if (startX < 40 && endX - startX > 80 && step > 1) {
+        setStep(step - 1)
+      }
     }
-  };
 
-  window.addEventListener("touchstart", handleTouchStart);
-  window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener('touchstart', touchStart)
+    window.addEventListener('touchend', touchEnd)
 
-  return () => {
-    window.removeEventListener("touchstart", handleTouchStart);
-    window.removeEventListener("touchend", handleTouchEnd);
-  };
-}, [step]);
+    return () => {
+      window.removeEventListener('touchstart', touchStart)
+      window.removeEventListener('touchend', touchEnd)
+    }
+  }, [step])
 
+  /* Form state */
   const [form, setForm] = useState<LoanFormType>({
     no_of_dependents: '',
     education: '',
@@ -538,16 +483,12 @@ useEffect(() => {
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'baseline' | 'xai')) || 'xai'
 
-  const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (value !== '') {
@@ -587,7 +528,6 @@ useEffect(() => {
     const deps = Number(form.no_of_dependents)
     if (form.no_of_dependents !== '' && (deps < 0 || deps > 30))
       inlineErrors.no_of_dependents = 'Dependents must be between 0 and 30.'
-
     if (form.education === '') inlineErrors.education = 'Required'
     if (form.self_employed === '') inlineErrors.self_employed = 'Required'
   }
@@ -602,18 +542,15 @@ useEffect(() => {
   if (step === 4) {
     if (form.residential_assets_value !== '' && res < 0)
       inlineErrors.residential_assets_value = 'Value cannot be negative.'
-
     if (form.commercial_assets_value !== '' && com < 0)
       inlineErrors.commercial_assets_value = 'Value cannot be negative.'
-
     if (form.luxury_assets_value !== '' && lux < 0)
       inlineErrors.luxury_assets_value = 'Value cannot be negative.'
-
     if (form.bank_asset_value !== '' && bank < 0)
       inlineErrors.bank_asset_value = 'Value cannot be negative.'
   }
 
-  /* Next Button Logic */
+  /* Can we go next? */
   const canNext = () => {
     if (step === 1) {
       return (
@@ -623,7 +560,6 @@ useEffect(() => {
         form.self_employed !== ''
       )
     }
-
     if (step === 2) {
       return (
         income > 0 &&
@@ -632,7 +568,6 @@ useEffect(() => {
         Object.keys(inlineErrors).length === 0
       )
     }
-
     if (step === 4) {
       return (
         form.residential_assets_value !== '' &&
@@ -642,7 +577,6 @@ useEffect(() => {
         Object.keys(inlineErrors).length === 0
       )
     }
-
     return true
   }
 
@@ -699,11 +633,12 @@ useEffect(() => {
   return (
     <main className="page-center">
       <a href="/chat" className="back-to-chat-btn">← Back to Chat</a>
+
       <form className="loan-form" onSubmit={handleSubmit}>
         <ProgressBar step={step} />
 
-        {step === 1 && (
-          <div className="step-animation">
+        <div className="step-animation">
+          {step === 1 && (
             <Step1
               form={form}
               handleChange={handleChange}
@@ -711,11 +646,9 @@ useEffect(() => {
               inlineErrors={inlineErrors}
               touched={touched}
             />
-          </div>
-        )}
+          )}
 
-        {step === 2 && (
-          <div className="step-animation">
+          {step === 2 && (
             <Step2
               form={form}
               handleChange={handleChange}
@@ -725,22 +658,18 @@ useEffect(() => {
               dti={dti}
               ratioColor={ratioColor}
             />
-          </div>
-        )}
+          )}
 
-        {step === 3 && (
-          <div className="step-animation">
+          {step === 3 && (
             <Step3
               form={form}
               handleChange={handleChange}
               handleBlur={handleBlur}
               cibilCategory={cibilCategory}
             />
-          </div>
-        )}
+          )}
 
-        {step === 4 && (
-          <div className="step-animation">
+          {step === 4 && (
             <Step4
               form={form}
               handleChange={handleChange}
@@ -750,11 +679,9 @@ useEffect(() => {
               lta={lta}
               ratioColor={ratioColor}
             />
-          </div>
-        )}
+          )}
 
-        {step === 5 && (
-          <div className="step-animation">
+          {step === 5 && (
             <Step5
               income={income}
               loan={loan}
@@ -765,8 +692,8 @@ useEffect(() => {
               cibilCategory={cibilCategory}
               ratioColor={ratioColor}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="actions">
           {step > 1 && (

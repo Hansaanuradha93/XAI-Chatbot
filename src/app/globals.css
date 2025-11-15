@@ -10,13 +10,20 @@
   --user-bg: #1D1F23;     /* User bubble background */
 }
 
+/* Global box sizing so width:100% respects padding */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 /* ---------- Base ---------- */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
   background: var(--bg);
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
   color: var(--text);
 }
 
@@ -25,14 +32,16 @@ html, body {
   display: grid;
   place-items: center;
   min-height: 100vh;
+  padding: 2rem 1rem;
 }
 
 /* ---------- Card Containers ---------- */
 .card {
   background: var(--card);
-  width: 420px;
+  width: 100%;
+  max-width: 420px;
   border-radius: 18px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   padding: 3rem;
   text-align: center;
   border: 1px solid var(--border);
@@ -51,7 +60,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFFFFF;
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
@@ -60,13 +69,13 @@ html, body {
   padding: 0.7rem 1.2rem;
   width: 100%;
   text-decoration: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: background 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
 }
 
 .googleBtn:hover {
-  background: #F9FAF9;
+  background: #f9faf9;
   border-color: var(--brand);
 }
 
@@ -94,10 +103,10 @@ html, body {
 
 /* Header */
 .chat-header {
-  background: #FFFFFF;
+  background: #ffffff;
   padding: 1rem 2rem;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -172,7 +181,7 @@ html, body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .avatar-initial {
@@ -183,13 +192,8 @@ html, body {
 }
 
 .chat-avatar.user {
-  background: #B0B8B5;
-  color: #FFFFFF;
-}
-
-.chat-avatar.user {
-  background: #B0B8B5;
-  color: #FFFFFF;
+  background: #b0b8b5;
+  color: #ffffff;
 }
 
 /* ---------- Bubbles ---------- */
@@ -199,7 +203,7 @@ html, body {
   font-size: 0.95rem;
   line-height: 1.5;
   word-wrap: break-word;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   width: fit-content;
   max-width: 75%;
 }
@@ -212,7 +216,7 @@ html, body {
 
 .bubble.user {
   background: var(--user-bg);
-  color: #FFFFFF;
+  color: #ffffff;
   border-radius: 16px 16px 4px 16px;
 }
 
@@ -223,7 +227,7 @@ html, body {
   gap: 0.8rem;
   padding: 1rem;
   border-top: 1px solid var(--border);
-  background: #FFFFFF;
+  background: #ffffff;
 }
 
 .input-bar input {
@@ -263,11 +267,19 @@ html, body {
 /* ---------- Loan Form ---------- */
 .loan-form {
   background: var(--card);
-  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
   border-radius: 16px;
-  width: 420px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border);
+  padding: 2rem 1.75rem 2rem;
+}
+
+/* Safe-area bottom padding for iPhone, etc. */
+@supports (padding: max(0px)) {
+  .loan-form {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
 }
 
 .loan-form h1 {
@@ -277,21 +289,35 @@ html, body {
   margin-bottom: 1.5rem;
 }
 
+.loan-form h2 {
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+/* Field wrapper to keep consistent spacing */
+.form-field {
+  margin-bottom: 1rem;
+}
+
+/* Labels */
 .loan-form label {
   display: block;
   color: var(--text);
   font-size: 0.9rem;
-  margin-top: 0.8rem;
-  margin-bottom: 0.3rem;
+  margin-top: 0.6rem;
+  margin-bottom: 0.35rem;
 }
 
+/* Inputs / selects */
 .loan-form select,
 .loan-form input {
+  display: block;
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.7rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--card);
+  background: #ffffff;
   color: var(--text);
   font-size: 1rem;
 }
@@ -328,7 +354,14 @@ html, body {
 .actions {
   display: flex;
   justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 1.2rem;
+}
+
+/* Disabled NEXT button */
+.button.primary:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* ---------- Suggestion Chips ---------- */
@@ -344,7 +377,7 @@ html, body {
 }
 
 .suggestion-chip:hover {
-  background: #EAEAEA;
+  background: #eaeaea;
 }
 
 /* ---------- Floating Button ---------- */
@@ -357,7 +390,7 @@ html, body {
   font-weight: 500;
   background: var(--brand);
   color: var(--text);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -376,10 +409,7 @@ html, body {
   padding-left: 8px;
 }
 
-.field-group {
-  margin-bottom: 12px;
-}
-
+/* ---------- Error styles ---------- */
 .error-text {
   color: #d9534f;
   font-size: 0.8rem;
@@ -390,6 +420,7 @@ html, body {
   border: 2px solid #d9534f !important;
 }
 
+/* ---------- Info box ---------- */
 .info-box {
   background: var(--bg);
   padding: 10px 14px;
@@ -418,7 +449,7 @@ html, body {
   font-weight: 600;
 }
 
-/* Insights Card */
+/* ---------- Insights Card ---------- */
 .insights-card {
   margin-top: 20px;
   display: grid;
@@ -435,7 +466,7 @@ html, body {
 
 .insight .label {
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .insight .value {
@@ -447,55 +478,20 @@ html, body {
 .insight .note {
   font-size: 0.75rem;
   margin-top: 6px;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
-/* ============================================================
-   ADDITIONAL STYLES FOR WIZARD + INSIGHTS (Safe to append)
-   ============================================================ */
-
-/* Step Indicators */
-.step-indicators {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 1rem;
-}
-
-.step-indicators div {
-  flex: 1;
-  height: 6px;
-  border-radius: 4px;
-  background: #DCE0DA;
-  transition: background 0.2s ease;
-}
-
-.step-indicators div.active {
-  background: var(--brand);
-}
-
-/* Error under fields */
-.field-error {
-  color: #d9534f;
-  font-size: 0.78rem;
-  margin-top: 4px;
-}
-
-/* Disabled NEXT button */
-.button.primary:disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Loan summary card (if added later) */
+/* Loan summary card */
 .summary-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
-  margin-top: 1rem;
+  margin-top: 10px;
+  font-size: 0.92rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .summary-card p {
@@ -519,18 +515,6 @@ html, body {
   transition: width 0.3s ease;
 }
 
-/* Highlighted note text */
-.insight .note {
-  color: var(--muted);
-}
-
-/* Ensure grid insights never overflow */
-.insights-card {
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 18px;
-}
-
 /* ===== Tooltip styling (ⓘ icon) ===== */
 
 .tooltip-container {
@@ -542,6 +526,7 @@ html, body {
 }
 
 .tooltip-icon {
+  position: relative;
   font-size: 0.85rem;
   cursor: pointer;
   opacity: 0.7;
@@ -575,6 +560,12 @@ html, body {
   transform: translateY(0);
 }
 
+.tooltip-icon:active .tooltip-text,
+.tooltip-icon:focus .tooltip-text {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
 .required-star {
   color: #d9534f;
   margin-left: 4px;
@@ -583,33 +574,30 @@ html, body {
   line-height: 1;
 }
 
-.summary-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: 12px;
-  margin-top: 10px;
-  font-size: 0.92rem;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 /* ======= PROGRESS BAR ========= */
-
 /* Vertical stacked labels + compact progress bar */
 .progress-wrapper-vertical {
   display: flex;
   justify-content: space-between;
   width: 100%;
   margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(
+    to bottom,
+    rgba(247, 249, 248, 0.98),
+    rgba(247, 249, 248, 0.9),
+    transparent
+  );
 }
 
 .progress-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 20%; /* 5 equal sections */
+  width: 20%;
 }
 
 .progress-label-vertical {
@@ -634,6 +622,13 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 2;
+  box-shadow: 0 0 0 0 rgba(142, 182, 155, 0);
+  transition: box-shadow 0.25s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.progress-circle.is-active {
+  box-shadow: 0 0 0 6px rgba(142, 182, 155, 0.35);
+  transform: translateY(-1px);
 }
 
 .progress-line-vertical {
@@ -643,6 +638,7 @@ html, body {
   border-radius: 2px;
 }
 
+/* ---------- Back to chat button ---------- */
 .back-to-chat-btn {
   position: fixed;
   bottom: 30px;
@@ -654,7 +650,7 @@ html, body {
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: background 0.2s ease, transform 0.2s ease;
   z-index: 100;
 }
@@ -664,161 +660,30 @@ html, body {
   transform: translateY(-2px);
 }
 
+/* ---------- Step animation ---------- */
 .step-animation {
-  animation: fadeIn 0.35s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 480px) {
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(1px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(3px);
   }
-}
-
-/* ✨ Glowing active step */
-.progress-circle.glow {
-  box-shadow: 0 0 0 4px rgba(142, 182, 155, 0.25),
-              0 0 12px rgba(142, 182, 155, 0.6);
-  transform: scale(1.08);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
-}
-
-@media (max-width: 480px) {
-  .loan-form {
-    width: 100%;
-    padding: 1.4rem;
-    border-radius: 12px;
-  }
-
-  .loan-form input,
-  .loan-form select {
-    padding: 0.9rem;
-    font-size: 1rem;
-  }
-
-  .loan-form label {
-    font-size: 0.95rem;
-  }
-
-  .actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  input[type="range"] {
-    height: 36px;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    width: 26px;
-    height: 26px;
-  }
-}
-
-@media (max-width: 480px) {
-  .insights-card {
-    grid-template-columns: 1fr !important;
-    gap: 12px;
-  }
-
-  .insight {
-    padding: 12px;
-  }
-
-  .insight .value {
-    font-size: 1.3rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .progress-wrapper-vertical {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: var(--card);
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-/* iPhone bottom safe-area */
-@supports (padding: max(0px)) {
-  .loan-form {
-    padding-bottom: max(1.6rem, env(safe-area-inset-bottom));
-  }
-
-  .back-to-chat-btn {
-    bottom: max(30px, env(safe-area-inset-bottom));
-  }
-}
-
-/* Tap-friendly tooltip */
-.tooltip-icon {
-  position: relative;
-}
-
-.tooltip-icon:active .tooltip-text,
-.tooltip-icon:focus .tooltip-text {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-}
-
-@media (max-width: 480px) {
-  .tooltip-text {
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    width: 180px;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .progress-wrapper-vertical {
-    padding: 6px 0;
-  }
-
-  .progress-label-vertical {
-    font-size: 0.7rem;
-  }
-
-  .progress-circle {
-    width: 22px;
-    height: 22px;
-    font-size: 0.75rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 /* =========================================
-   PREMIUM MOBILE UI
+   MOBILE / SMALL SCREENS
    ========================================= */
 
-/* 1. Safe-area support (iPhones, notches, home bar) */
-@supports (padding: max(0px)) {
-  .loan-form {
-    padding-bottom: max(1.8rem, env(safe-area-inset-bottom));
-  }
-
-  .back-to-chat-btn {
-    bottom: max(30px, env(safe-area-inset-bottom));
-  }
-}
-
-/* 2. Make layout mobile-first, responsive */
 @media (max-width: 640px) {
   .page-center {
     display: block;
-    padding: 1.5rem 1rem 3rem;
+    padding: 1.5rem 0.75rem 3rem;
   }
 
   .loan-form {
@@ -841,42 +706,33 @@ html, body {
 
   .loan-form input,
   .loan-form select {
-    padding: 0.75rem 0.9rem;
+    padding: 0.75rem 1rem;
     font-size: 1rem;
   }
 
   .actions {
-    flex-direction: row;
+    flex-direction: column;
     gap: 0.6rem;
   }
 
   .button {
-    flex: 1;
+    width: 100%;
     text-align: center;
   }
-}
 
-/* 3. Sticky progress header on mobile (keeps steps visible) */
-.loan-form {
-  position: relative;
-}
+  .insights-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 
-.progress-wrapper-vertical {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1.25rem;
-  background: linear-gradient(
-    to bottom,
-    rgba(247, 249, 248, 0.98),
-    rgba(247, 249, 248, 0.90),
-    transparent
-  );
-}
+  .insight {
+    padding: 12px;
+  }
 
-/* Compact progress on small screens */
-@media (max-width: 640px) {
+  .summary-card {
+    padding: 14px;
+  }
+
   .progress-wrapper-vertical {
     padding-top: 0.25rem;
     padding-bottom: 0.8rem;
@@ -896,54 +752,35 @@ html, body {
   .progress-line-vertical {
     height: 2px;
   }
-}
 
-/* 4. Glowing active step */
-.progress-circle {
-  box-shadow: 0 0 0 0 rgba(142, 182, 155, 0.0);
-  transition: box-shadow 0.25s ease, background 0.2s ease, transform 0.2s ease;
-}
-
-.progress-circle.is-active {
-  box-shadow: 0 0 0 6px rgba(142, 182, 155, 0.35);
-  transform: translateY(-1px);
-}
-
-/* 5. Better stacked insights on mobile */
-@media (max-width: 640px) {
-  .insights-card {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .tooltip-text {
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    width: 190px;
+    text-align: center;
   }
 
-  .insight {
-    padding: 12px;
-  }
-
-  .summary-card {
-    padding: 14px;
+  .back-to-chat-btn {
+    font-size: 0.85rem;
+    padding: 8px 14px;
   }
 }
 
-/* 6. Range slider touch area + nicer look */
-input[type="range"] {
+/* Range slider (all screens) */
+input[type='range'] {
   width: 100%;
   -webkit-appearance: none;
   background: transparent;
   margin-top: 0.6rem;
 }
 
-input[type="range"]::-webkit-slider-runnable-track {
+input[type='range']::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--brand),
-    #cdd6d2
-  );
+  background: linear-gradient(90deg, var(--brand), #cdd6d2);
 }
 
-input[type="range"]::-webkit-slider-thumb {
+input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
@@ -951,76 +788,26 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ffffff;
   border: 2px solid var(--brand);
   margin-top: -7px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-input[type="range"]::-moz-range-track {
+input[type='range']::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--brand),
-    #cdd6d2
-  );
+  background: linear-gradient(90deg, var(--brand), #cdd6d2);
 }
 
-input[type="range"]::-moz-range-thumb {
+input[type='range']::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: #ffffff;
   border: 2px solid var(--brand);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Extra tap area on mobile */
 @media (max-width: 640px) {
-  input[type="range"] {
+  input[type='range'] {
     padding: 10px 0;
-  }
-}
-
-/* 7. Tap-friendly tooltips on mobile */
-.tooltip-icon {
-  position: relative;
-}
-
-.tooltip-icon:active .tooltip-text,
-.tooltip-icon:focus .tooltip-text {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-}
-
-@media (max-width: 640px) {
-  .tooltip-text {
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    width: 190px;
-    text-align: center;
-  }
-}
-
-/* 8. Make step transitions softer on small screens */
-.step-animation {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 640px) {
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(1px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-}
-
-/* 9. Back-to-chat button tweak on mobile */
-@media (max-width: 640px) {
-  .back-to-chat-btn {
-    font-size: 0.85rem;
-    padding: 8px 14px;
   }
 }
