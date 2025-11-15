@@ -465,6 +465,32 @@ export default function LoanFormPage() {
     });
   }, [step]);
 
+  // Mobile swipe-back gesture
+useEffect(() => {
+  let touchStartX = 0;
+
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    const endX = e.changedTouches[0].clientX;
+
+    // Swipe from left edge, strong enough
+    if (touchStartX < 40 && endX - touchStartX > 80) {
+      if (step > 1) setStep(prev => prev - 1);
+    }
+  };
+
+  window.addEventListener("touchstart", handleTouchStart);
+  window.addEventListener("touchend", handleTouchEnd);
+
+  return () => {
+    window.removeEventListener("touchstart", handleTouchStart);
+    window.removeEventListener("touchend", handleTouchEnd);
+  };
+}, [step]);
+
   const [form, setForm] = useState<LoanFormType>({
     no_of_dependents: '',
     education: '',

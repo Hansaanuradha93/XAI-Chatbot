@@ -669,8 +669,15 @@ html, body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(1px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
 /* ✨ Glowing active step */
@@ -679,4 +686,115 @@ html, body {
               0 0 12px rgba(142, 182, 155, 0.6);
   transform: scale(1.08);
   transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+@media (max-width: 480px) {
+  .loan-form {
+    width: 100%;
+    padding: 1.4rem;
+    border-radius: 12px;
+  }
+
+  .loan-form input,
+  .loan-form select {
+    padding: 0.9rem;
+    font-size: 1rem;
+  }
+
+  .loan-form label {
+    font-size: 0.95rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  input[type="range"] {
+    height: 36px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .insights-card {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .insight {
+    padding: 12px;
+  }
+
+  .insight .value {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-wrapper-vertical {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--card);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+/* iPhone bottom safe-area */
+@supports (padding: max(0px)) {
+  .loan-form {
+    padding-bottom: max(1.6rem, env(safe-area-inset-bottom));
+  }
+
+  .back-to-chat-btn {
+    bottom: max(30px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Tap-friendly tooltip */
+.tooltip-icon {
+  position: relative;
+}
+
+.tooltip-icon:active .tooltip-text,
+.tooltip-icon:focus .tooltip-text {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (max-width: 480px) {
+  .tooltip-text {
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    width: 180px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-wrapper-vertical {
+    padding: 6px 0;
+  }
+
+  .progress-label-vertical {
+    font-size: 0.7rem;
+  }
+
+  .progress-circle {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
 }
