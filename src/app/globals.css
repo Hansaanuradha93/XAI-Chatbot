@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg: #FFFFFF;          /* Global background */
   --card: #F7F9F8;        /* Cards, chat bubbles, input areas */
