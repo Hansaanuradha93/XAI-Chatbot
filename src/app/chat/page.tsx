@@ -1,40 +1,38 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
-
-interface Message {
-  sender: 'user' | 'bot'
-  text: string
-  type?: 'text' | 'action'
-}
-
-type LoanResult = {
-  prediction: string
-  explanation?: Record<string, number> | { error?: string } | null
-}
-
-type ChatContext = 'loan' | 'faq' | null
+import { Card, CardContent } from '@/components/ui/card'
+import { ChatHeader } from '@/components/chat/ChatHeader'
+import { ChatMessages } from '@/components/chat/ChatMessages'
+import { ChatInput } from '@/components/chat/ChatInput'
+import { FloatingCTA } from '@/components/chat/FloatingCTA'
+import type { Message, LoanResult, ChatContext } from '@/components/chat/types'
 
 export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
-  // ✅ Clean greeting — no emojis
   const initialGreeting: Message[] = [
-    { sender: 'bot', text: 'Hello! I’m TrustAI — your personal AI loan advisor.' },
-    { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.' },
+    {
+      sender: 'bot',
+      text: 'Hello! I’m TrustAI — your personal AI loan advisor.',
+    },
+    {
+      sender: 'bot',
+      text: 'You can check your loan eligibility or ask me financial FAQs.',
+    },
   ]
 
   const [messages, setMessages] = useState<Message[]>(initialGreeting)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const [lastResult, setLastResult] = useState<LoanResult | null>(null)
   const [context, setContext] = useState<ChatContext>(null)
+
   const [ratingPending, setRatingPending] = useState(false)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
   const [feedbackPending, setFeedbackPending] = useState(false)
@@ -42,9 +40,9 @@ export default function ChatPage() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
-  // Mode toggle (XAI or Baseline)
   const [mode, setMode] = useState<'xai' | 'baseline'>(
-    (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
   )
 
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user')
@@ -52,7 +50,9 @@ export default function ChatPage() {
   const toggleMode = () => {
     const newMode = mode === 'xai' ? 'baseline' : 'xai'
     setMode(newMode)
-    localStorage.setItem('chat_mode', newMode)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('chat_mode', newMode)
+    }
   }
 
   const signOut = async () => {
@@ -60,11 +60,7 @@ export default function ChatPage() {
     router.replace('/')
   }
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, thinking, ratingPending, feedbackPending])
-
-  // 🔹 Load chat history from Supabase
+  // Load chat history
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!email) return
@@ -80,7 +76,7 @@ export default function ChatPage() {
       }
 
       if (data && data.length > 0) {
-        const pastMessages = data.map((m) => ({
+        const pastMessages: Message[] = data.map((m) => ({
           sender: m.sender as 'user' | 'bot',
           text: m.message,
         }))
@@ -98,32 +94,33 @@ export default function ChatPage() {
     loadChatHistory()
   }, [email])
 
-// 🔹 Fetch user mode allocation from backend
-useEffect(() => {
-  const fetchUserMode = async () => {
-    if (!email) return
-    try {
-      const data = await apiFetch(`/api/v1/users/mode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
+  // Fetch user mode & role
+  useEffect(() => {
+    const fetchUserMode = async () => {
+      if (!email) return
+      try {
+        const data = await apiFetch(`/api/v1/users/mode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
 
-      if (data.mode) {
-        setMode(data.mode)
-        localStorage.setItem('chat_mode', data.mode)
+        if (data.mode) {
+          setMode(data.mode)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('chat_mode', data.mode)
+          }
+        }
+        if (data.role) {
+          setUserRole(data.role)
+        }
+      } catch (err) {
+        console.error('⚠️ Failed to fetch user mode:', err)
       }
-      if (data.role) {
-        setUserRole(data.role)
-      }
-    } catch (err) {
-      console.error('⚠️ Failed to fetch user mode:', err)
     }
-  }
-  fetchUserMode()
-}, [email])
+    fetchUserMode()
+  }, [email])
 
-  // 🔹 Save message
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
     if (!email) return
     const { error } = await supabase.from('chat_history').insert({
@@ -135,7 +132,7 @@ useEffect(() => {
     if (error) console.error('Error saving message:', error)
   }
 
-  // --- FAQ Message ---
+  // FAQ message send
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
@@ -152,10 +149,9 @@ useEffect(() => {
         body: JSON.stringify({
           query: trimmed,
           user_email: email || 'anonymous',
-        })
+        }),
       })
 
-      // const data = await res.json()
       setThinking(false)
 
       if (data.answer) {
@@ -178,7 +174,7 @@ useEffect(() => {
     }
   }
 
-  // --- Rating Handler ---
+  // Rating handler
   const handleRating = async (score: number) => {
     if (!email) return
     if (ratingSubmitting) return
@@ -213,12 +209,15 @@ useEffect(() => {
 
     const botMsg1 = `Thanks! Your trust rating (${score}/5) was recorded.`
     const botMsg2 = 'Would you like to share why you rated it this way?'
-    setMessages((prev) => [...prev, { sender: 'bot', text: botMsg1 }, { sender: 'bot', text: botMsg2 }])
+    setMessages((prev) => [
+      ...prev,
+      { sender: 'bot', text: botMsg1 },
+      { sender: 'bot', text: botMsg2 },
+    ])
     saveMessage('bot', botMsg1)
     saveMessage('bot', botMsg2)
   }
 
-  // --- Feedback Handler ---
   const submitFeedback = async () => {
     if (!feedback.trim()) return
     setFeedbackSubmitting(true)
@@ -262,175 +261,65 @@ useEffect(() => {
     setFeedback('')
   }
 
+  const skipFeedback = () => {
+    setFeedbackPending(false)
+    setFeedback('')
+    const skipMsg = 'Feedback skipped.'
+    setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
+    saveMessage('bot', skipMsg)
+  }
+
   if (loading) {
     return (
-      <main className="page-center">
-        <div className="card">Loading…</div>
+      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-sm">
+          Loading…
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="chat-container">
-      <header className="chat-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h2>TrustAI Chatbot</h2>
-          <span
-            style={{
-              padding: '3px 10px',
-              borderRadius: '8px',
-              background: mode === 'xai' ? '#1e8e3e' : '#888',
-              fontSize: '0.8rem',
-              color: 'white',
-            }}
-          >
-            {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
-          </span>
-        </div>
-          <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {/* Profile Icon */}
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  border: mode === 'xai' ? '2px solid #1e8e3e' : '2px solid transparent',
-                  background: '#ccc',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
-                {email ? email.charAt(0).toUpperCase() : '?'}
-              </div>
+    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 text-slate-50 px-4 py-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4">
+        <Card className="flex h-[80vh] flex-col overflow-hidden">
+          <ChatHeader
+            email={email}
+            mode={mode}
+            userRole={userRole}
+            onToggleMode={toggleMode}
+            onSignOut={signOut}
+            onGoAdmin={() => router.push('/admin')}
+          />
 
-              {/* Only admins see the toggle + Admin button */}
-              {userRole === 'admin' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={toggleMode} className="button small">Toggle Mode</button>
-                  <button onClick={() => router.push('/admin')} className="admin-btn">Admin</button>
-                </div>
-              )}
-
-            <button onClick={signOut} className="danger">Sign out</button>
-      </div>
-      </header>
-
-      {/* ---------- Chat Messages with Clean Avatars ---------- */}
-      <section className="chat-box">
-        {messages.map((msg, i) => {
-          const isBot = msg.sender === 'bot'
-          const isDetailedExplanation =
-            msg.text.includes('**Decision Outcome') ||
-            msg.text.includes('**Main Financial Factors') ||
-            msg.text.includes('**Conclusion')
-
-          // ✅ Format message text (bold, bullet points, spacing) for human_message
-          const formattedText = isDetailedExplanation
-            ? msg.text
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // bold
-                .replace(/- /g, '• ') // bullet points
-                .replace(/\n/g, '<br/>') // line breaks
-            : msg.text
-
-          return (
-            <div key={i} className={`chat-row ${msg.sender}`}>
-              <div className={`chat-avatar ${msg.sender}`}>
-                <span className="avatar-initial">{isBot ? 'AI' : 'U'}</span>
-              </div>
-              {/* ✅ Keep bubble colors same, only format text */}
-              <div
-                className={`bubble ${msg.sender}`}
-                style={{
-                  whiteSpace: 'pre-line',
-                  lineHeight: 1.6,
-                  fontSize: '0.95rem',
-                  fontFamily: 'Inter, sans-serif',
-                }}
-                dangerouslySetInnerHTML={{ __html: formattedText }}
-              />
-            </div>
-          )
-        })}
-
-        {/* Rating Prompt */}
-        {ratingPending && (
-          <div className="bubble bot">
-            <b>On a scale of 1–5, how much do you trust this answer?</b>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} className="button" disabled={ratingSubmitting} onClick={() => handleRating(n)}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Feedback Prompt */}
-        {feedbackPending && (
-          <div className="bubble bot">
-            <b>Optional Feedback</b>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Share your thoughts..."
-              rows={3}
-              style={{
-                width: '100%',
-                marginTop: '8px',
-                borderRadius: '6px',
-                border: '1px solid var(--border)',
-                background: 'var(--card)',
-                color: 'var(--text)',
-                padding: '6px',
-              }}
+          <CardContent className="flex flex-1 flex-col p-0">
+            <ChatMessages
+              messages={messages}
+              ratingPending={ratingPending}
+              ratingSubmitting={ratingSubmitting}
+              feedbackPending={feedbackPending}
+              feedback={feedback}
+              feedbackSubmitting={feedbackSubmitting}
+              onRate={handleRating}
+              onFeedbackChange={setFeedback}
+              onFeedbackSubmit={submitFeedback}
+              onFeedbackSkip={skipFeedback}
             />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-              <button className="button" disabled={feedbackSubmitting} onClick={submitFeedback}>
-                Submit Feedback
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => {
-                  setFeedbackPending(false)
-                  setFeedback('')
-                  const skipMsg = 'Feedback skipped.'
-                  setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
-                  saveMessage('bot', skipMsg)
-                }}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </section>
+          </CardContent>
 
-      {/* Input Bar */}
-      <footer className="input-bar">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question about finance..."
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-        />
-        <button onClick={sendMessage}>➤</button>
-      </footer>
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={sendMessage}
+            thinking={thinking}
+          />
+        </Card>
+      </div>
 
-      {/* Floating Loan Button */}
-      {email && (
-        <button
-          onClick={() => router.push('/loan-form')}
-          className="floating-loan-btn"
-        >
-          Apply for a Loan
-        </button>
-      )}
+      <FloatingCTA
+        visible={!!email}
+        onClick={() => router.push('/loan-form')}
+      />
     </main>
   )
 }

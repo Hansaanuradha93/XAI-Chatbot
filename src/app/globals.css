@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* your existing CSS below */
 :root {
   --bg: #FFFFFF;          /* Global background */
   --card: #F7F9F8;        /* Cards, chat bubbles, input areas */
@@ -922,4 +923,74 @@ input[type='range']::-moz-range-thumb {
 
 .formatted-number {
   font-variant-numeric: tabular-nums;
+}
+
+/* Typing indicator bubble */
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 40px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.4;
+  animation: typingPulse 1s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typingPulse {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}/* Typing indicator bubble */
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 40px;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.4;
+  animation: typingPulse 1s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typingPulse {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
 }
