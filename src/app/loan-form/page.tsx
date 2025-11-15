@@ -114,8 +114,10 @@ const Label = ({
 function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepProps) {
   return (
     <>
-      <p>Step 1 of 5</p>
-      <h2>Personal Information</h2>
+      <div className="step-header">
+        <p>Step 1 of 5</p>
+        <h2>Personal Information</h2>
+      </div>
 
       <div className="form-field">
         <Label tip="Number of people depending on your income." required>
@@ -175,9 +177,10 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: StepPr
 function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, ratioColor }: StepProps) {
   return (
     <>
-      <p>Step 2 of 5</p>
-      <h2>Loan Details</h2>
-
+      <div className="step-header">
+        <p>Step 2 of 5</p>
+        <h2>Loan Details</h2>
+      </div>
       <div className="form-field">
         <Label tip="Your total yearly income before tax." required>
           Annual Income
@@ -248,8 +251,10 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
 function Step3({ form, handleChange, handleBlur, cibilCategory }: StepProps) {
   return (
     <>
-      <p>Step 3 of 5</p>
-      <h2>Credit Score Insights</h2>
+      <div className="step-header">
+        <p>Step 3 of 5</p>
+        <h2>Credit Score Insights</h2>
+      </div>
 
       <Label tip="Higher score increases approval chances.">
         Credit Score: {form.cibil_score} ({cibilCategory})
@@ -278,9 +283,10 @@ function Step3({ form, handleChange, handleBlur, cibilCategory }: StepProps) {
 function Step4({ form, handleChange, handleBlur, inlineErrors, touched, lta, ratioColor }: StepProps) {
   return (
     <>
-      <p>Step 4 of 5</p>
-      <h2>Asset Information</h2>
-
+      <div className="step-header">
+        <p>Step 4 of 5</p>
+        <h2>Asset Information</h2>
+      </div>
       <div className="form-field">
         <Label tip="Value of your house or apartment." required>
           Residential Assets
@@ -401,8 +407,10 @@ function Step5({
 }) {
   return (
     <>
-      <p>Final Step</p>
-      <h2>Review Your Application</h2>
+      <div className="step-header">
+        <p>Final Step</p>
+        <h2>Review Your Application</h2>
+      </div>
 
       <div className="summary-card">
         <p><b>Annual Income:</b> Rs. {income.toLocaleString()}</p>

@@ -273,6 +273,18 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border);
   padding: 2rem 1.75rem 2rem;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky step title inside the form */
+.step-header {
+  position: sticky;
+  top: 58px; /* sits below your sticky progress bar */
+  background: var(--card);
+  padding: 0.6rem 0 0.3rem;
+  z-index: 8;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Safe-area bottom padding for iPhone, etc. */
@@ -340,15 +352,34 @@ body {
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .button:hover {
   background: var(--brand-hover);
 }
 
+.button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.6) 10%, transparent 10%);
+  background-position: center;
+  transform: scale(10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.35s;
+}
+
 .button.secondary {
   background: var(--border);
   color: var(--text);
+}
+
+.button:active::after {
+  transform: scale(0);
+  opacity: 1;
+  transition: 0s;
 }
 
 .actions {
@@ -766,6 +797,17 @@ body {
   }
 }
 
+@media (min-width: 640px) {
+  .loan-form {
+    transition: transform 0.18s ease, box-shadow 0.2s ease;
+  }
+
+  .loan-form:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+  }
+}
+
 /* Range slider (all screens) */
 input[type='range'] {
   width: 100%;
@@ -810,4 +852,13 @@ input[type='range']::-moz-range-thumb {
   input[type='range'] {
     padding: 10px 0;
   }
+}
+
+/* Input focus glow */
+.loan-form input:focus,
+.loan-form select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(142, 182, 155, 0.25);
+  outline: none;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
