@@ -7,7 +7,36 @@ import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
 
 /* ============================================================
-   PROGRESS BAR WITH LABELED STEPS
+   TYPES (Fixes all "any" errors)
+============================================================ */
+interface LoanFormType {
+  no_of_dependents: string
+  education: string
+  self_employed: string
+  income_annum: string
+  loan_amount: string
+  loan_term: number | string
+  cibil_score: number
+  residential_assets_value: string
+  commercial_assets_value: string
+  luxury_assets_value: string
+  bank_asset_value: string
+}
+
+interface StepProps {
+  form: LoanFormType
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+  handleBlur: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  inlineErrors: Record<string, string>
+  touched: Record<string, boolean>
+  dti?: number
+  lta?: number
+  ratioColor?: (ratio: number, good: number, warn: number) => string
+  cibilCategory?: string
+}
+
+/* ============================================================
+   PROGRESS BAR
 ============================================================ */
 const steps = ["Personal", "Loan", "Credit", "Assets", "Review"];
 
@@ -20,7 +49,6 @@ const ProgressBar = ({ step }: { step: number }) => (
 
       return (
         <div key={index} className="progress-block">
-          {/* Label ABOVE circle */}
           <div
             className="progress-label-vertical"
             style={{
@@ -32,7 +60,6 @@ const ProgressBar = ({ step }: { step: number }) => (
           </div>
 
           <div className="progress-inner">
-            {/* Circle */}
             <div
               className={`progress-circle ${isActive ? "glow" : ""}`}
               style={{
@@ -43,7 +70,6 @@ const ProgressBar = ({ step }: { step: number }) => (
               {stepNumber}
             </div>
 
-            {/* Line */}
             {index < steps.length - 1 && (
               <div
                 className="progress-line-vertical"
@@ -57,10 +83,10 @@ const ProgressBar = ({ step }: { step: number }) => (
       );
     })}
   </div>
-);
+)
 
 /* ============================================================
-   TOOLTIP LABEL WITH REQUIRED ASTERISK
+   LABEL (Tooltip)
 ============================================================ */
 const Label = ({
   children,
@@ -82,10 +108,16 @@ const Label = ({
 )
 
 /* ============================================================
-   STEP COMPONENTS
+   STEPS (now fully typed)
 ============================================================ */
 
-function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: any) {
+function Step1({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched
+}: StepProps) {
   return (
     <>
       <p>Step 1 of 5</p>
@@ -150,7 +182,15 @@ function Step1({ form, handleChange, handleBlur, inlineErrors, touched }: any) {
   )
 }
 
-function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, ratioColor }: any) {
+function Step2({
+  form,
+  handleChange,
+  handleBlur,
+  inlineErrors,
+  touched,
+  dti,
+  ratioColor
+}: StepProps) {
   return (
     <>
       <p>Step 2 of 5</p>
@@ -207,8 +247,8 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
       <div className="insights-card">
         <div className="insight">
           <div className="label">Debt-to-Income Ratio</div>
-          <div className="value" style={{ color: ratioColor(dti, 40, 60) }}>
-            {(dti * 100).toFixed(1)}%
+          <div className="value" style={{ color: ratioColor?.(dti ?? 0, 40, 60) }}>
+            {((dti ?? 0) * 100).toFixed(1)}%
           </div>
           <div className="note">Ideal: Under 40%</div>
         </div>
@@ -217,7 +257,12 @@ function Step2({ form, handleChange, handleBlur, inlineErrors, touched, dti, rat
   )
 }
 
-function Step3({ form, handleChange, handleBlur, cibilCategory }: any) {
+function Step3({
+  form,
+  handleChange,
+  handleBlur,
+  cibilCategory
+}: StepProps) {
   return (
     <>
       <p>Step 3 of 5</p>
@@ -255,7 +300,7 @@ function Step4({
   touched,
   lta,
   ratioColor
-}: any) {
+}: StepProps) {
   return (
     <>
       <p>Step 4 of 5</p>
@@ -346,8 +391,8 @@ function Step4({
       <div className="insights-card">
         <div className="insight">
           <div className="label">Loan-to-Asset Ratio</div>
-          <div className="value" style={{ color: ratioColor(lta, 40, 80) }}>
-            {(lta * 100).toFixed(1)}%
+          <div className="value" style={{ color: ratioColor?.(lta ?? 0, 40, 80) }}>
+            {((lta ?? 0) * 100).toFixed(1)}%
           </div>
           <div className="note">Ideal: Under 80%</div>
         </div>
@@ -356,7 +401,25 @@ function Step4({
   )
 }
 
-function Step5({ income, loan, totalAssets, dti, lta, form, cibilCategory, ratioColor }: any) {
+function Step5({
+  income,
+  loan,
+  totalAssets,
+  dti,
+  lta,
+  form,
+  cibilCategory,
+  ratioColor
+}: {
+  income: number
+  loan: number
+  totalAssets: number
+  dti: number
+  lta: number
+  form: LoanFormType
+  cibilCategory: string
+  ratioColor: (ratio: number, good: number, warn: number) => string
+}) {
   return (
     <>
       <p>Final Step</p>
@@ -402,7 +465,7 @@ export default function LoanFormPage() {
     });
   }, [step]);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<LoanFormType>({
     no_of_dependents: '',
     education: '',
     self_employed: '',
@@ -422,12 +485,16 @@ export default function LoanFormPage() {
     (typeof window !== 'undefined' &&
       (localStorage.getItem('chat_mode') as 'baseline' | 'xai')) || 'xai'
 
-  const handleBlur = (e: any) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
   }
 
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (value !== '') {
@@ -568,7 +635,7 @@ export default function LoanFormPage() {
       }
 
       router.push('/chat')
-    } catch (err) {
+    } catch {
       alert('Error contacting backend.')
     } finally {
       setLoading(false)
@@ -584,67 +651,67 @@ export default function LoanFormPage() {
 
         {step === 1 && (
           <div className="step-animation">
-          <Step1
-            form={form}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            inlineErrors={inlineErrors}
-            touched={touched}
-          />
+            <Step1
+              form={form}
+              handleChange={handleChange}
+              handleBlur={handleBlur}
+              inlineErrors={inlineErrors}
+              touched={touched}
+            />
           </div>
         )}
 
         {step === 2 && (
           <div className="step-animation">
-          <Step2
-            form={form}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            inlineErrors={inlineErrors}
-            touched={touched}
-            dti={dti}
-            ratioColor={ratioColor}
-          />
+            <Step2
+              form={form}
+              handleChange={handleChange}
+              handleBlur={handleBlur}
+              inlineErrors={inlineErrors}
+              touched={touched}
+              dti={dti}
+              ratioColor={ratioColor}
+            />
           </div>
         )}
 
         {step === 3 && (
           <div className="step-animation">
-          <Step3
-            form={form}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            cibilCategory={cibilCategory}
-          />
+            <Step3
+              form={form}
+              handleChange={handleChange}
+              handleBlur={handleBlur}
+              cibilCategory={cibilCategory}
+            />
           </div>
         )}
 
         {step === 4 && (
           <div className="step-animation">
-          <Step4
-            form={form}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-            inlineErrors={inlineErrors}
-            touched={touched}
-            lta={lta}
-            ratioColor={ratioColor}
-          />
+            <Step4
+              form={form}
+              handleChange={handleChange}
+              handleBlur={handleBlur}
+              inlineErrors={inlineErrors}
+              touched={touched}
+              lta={lta}
+              ratioColor={ratioColor}
+            />
           </div>
         )}
 
         {step === 5 && (
           <div className="step-animation">
-          <Step5
-            income={income}
-            loan={loan}
-            totalAssets={totalAssets}
-            dti={dti}
-            lta={lta}
-            form={form}
-            cibilCategory={cibilCategory}
-            ratioColor={ratioColor}
-          />
+            <Step5
+              income={income}
+              loan={loan}
+              totalAssets={totalAssets}
+              dti={dti}
+              lta={lta}
+              form={form}
+              cibilCategory={cibilCategory}
+              ratioColor={ratioColor}
+            />
           </div>
         )}
 
