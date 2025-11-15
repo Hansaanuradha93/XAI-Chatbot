@@ -451,6 +451,13 @@ body {
   border: 2px solid #d9534f !important;
 }
 
+/* ✅ Ultra-minimal valid state: soft green glow, no icons */
+.valid-input {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px rgba(142, 182, 155, 0.18);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
 /* ---------- Info box ---------- */
 .info-box {
   background: var(--bg);

@@ -148,6 +148,10 @@ function Step1({
           className={
             touched.no_of_dependents && inlineErrors.no_of_dependents
               ? 'error-input'
+              : touched.no_of_dependents &&
+                !inlineErrors.no_of_dependents &&
+                form.no_of_dependents !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -166,7 +170,13 @@ function Step1({
           onChange={handleChange}
           onBlur={handleBlur}
           className={
-            touched.education && inlineErrors.education ? 'error-input' : ''
+            touched.education && inlineErrors.education
+              ? 'error-input'
+              : touched.education &&
+                !inlineErrors.education &&
+                form.education !== ''
+              ? 'valid-input'
+              : ''
           }
         >
           <option value="">Select education</option>
@@ -193,6 +203,10 @@ function Step1({
           className={
             touched.self_employed && inlineErrors.self_employed
               ? 'error-input'
+              : touched.self_employed &&
+                !inlineErrors.self_employed &&
+                form.self_employed !== ''
+              ? 'valid-input'
               : ''
           }
         >
@@ -244,6 +258,10 @@ function Step2({
           className={
             touched.income_annum && inlineErrors.income_annum
               ? 'error-input'
+              : touched.income_annum &&
+                !inlineErrors.income_annum &&
+                form.income_annum !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -266,6 +284,10 @@ function Step2({
           className={
             touched.loan_amount && inlineErrors.loan_amount
               ? 'error-input'
+              : touched.loan_amount &&
+                !inlineErrors.loan_amount &&
+                form.loan_amount !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -286,7 +308,13 @@ function Step2({
           onChange={handleChange}
           onBlur={handleBlur}
           className={
-            touched.loan_term && inlineErrors.loan_term ? 'error-input' : ''
+            touched.loan_term && inlineErrors.loan_term
+              ? 'error-input'
+              : touched.loan_term &&
+                !inlineErrors.loan_term &&
+                form.loan_term !== ''
+              ? 'valid-input'
+              : ''
           }
         />
         {touched.loan_term && inlineErrors.loan_term && (
@@ -394,6 +422,10 @@ function Step4({
             touched.residential_assets_value &&
             inlineErrors.residential_assets_value
               ? 'error-input'
+              : touched.residential_assets_value &&
+                !inlineErrors.residential_assets_value &&
+                form.residential_assets_value !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -419,6 +451,10 @@ function Step4({
             touched.commercial_assets_value &&
             inlineErrors.commercial_assets_value
               ? 'error-input'
+              : touched.commercial_assets_value &&
+                !inlineErrors.commercial_assets_value &&
+                form.commercial_assets_value !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -444,6 +480,10 @@ function Step4({
             touched.luxury_assets_value &&
             inlineErrors.luxury_assets_value
               ? 'error-input'
+              : touched.luxury_assets_value &&
+                !inlineErrors.luxury_assets_value &&
+                form.luxury_assets_value !== ''
+              ? 'valid-input'
               : ''
           }
         />
@@ -468,6 +508,10 @@ function Step4({
           className={
             touched.bank_asset_value && inlineErrors.bank_asset_value
               ? 'error-input'
+              : touched.bank_asset_value &&
+                !inlineErrors.bank_asset_value &&
+                form.bank_asset_value !== ''
+              ? 'valid-input'
               : ''
           }
         />
