@@ -798,3 +798,229 @@ html, body {
     font-size: 0.75rem;
   }
 }
+
+/* =========================================
+   PREMIUM MOBILE UI
+   ========================================= */
+
+/* 1. Safe-area support (iPhones, notches, home bar) */
+@supports (padding: max(0px)) {
+  .loan-form {
+    padding-bottom: max(1.8rem, env(safe-area-inset-bottom));
+  }
+
+  .back-to-chat-btn {
+    bottom: max(30px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 2. Make layout mobile-first, responsive */
+@media (max-width: 640px) {
+  .page-center {
+    display: block;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .loan-form {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 1.75rem;
+    border-radius: 16px;
+  }
+
+  .loan-form h1,
+  .loan-form h2 {
+    font-size: 1.25rem;
+    text-align: left;
+  }
+
+  .loan-form label {
+    font-size: 0.9rem;
+  }
+
+  .loan-form input,
+  .loan-form select {
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+  }
+
+  .actions {
+    flex-direction: row;
+    gap: 0.6rem;
+  }
+
+  .button {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* 3. Sticky progress header on mobile (keeps steps visible) */
+.loan-form {
+  position: relative;
+}
+
+.progress-wrapper-vertical {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(247, 249, 248, 0.98),
+    rgba(247, 249, 248, 0.90),
+    transparent
+  );
+}
+
+/* Compact progress on small screens */
+@media (max-width: 640px) {
+  .progress-wrapper-vertical {
+    padding-top: 0.25rem;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .progress-label-vertical {
+    font-size: 0.72rem;
+  }
+
+  .progress-circle {
+    width: 22px;
+    height: 22px;
+    font-size: 0.75rem;
+  }
+
+  .progress-line-vertical {
+    height: 2px;
+  }
+}
+
+/* 4. Glowing active step */
+.progress-circle {
+  box-shadow: 0 0 0 0 rgba(142, 182, 155, 0.0);
+  transition: box-shadow 0.25s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.progress-circle.is-active {
+  box-shadow: 0 0 0 6px rgba(142, 182, 155, 0.35);
+  transform: translateY(-1px);
+}
+
+/* 5. Better stacked insights on mobile */
+@media (max-width: 640px) {
+  .insights-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .insight {
+    padding: 12px;
+  }
+
+  .summary-card {
+    padding: 14px;
+  }
+}
+
+/* 6. Range slider touch area + nicer look */
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  background: transparent;
+  margin-top: 0.6rem;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    #cdd6d2
+  );
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--brand);
+  margin-top: -7px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    #cdd6d2
+  );
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--brand);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Extra tap area on mobile */
+@media (max-width: 640px) {
+  input[type="range"] {
+    padding: 10px 0;
+  }
+}
+
+/* 7. Tap-friendly tooltips on mobile */
+.tooltip-icon {
+  position: relative;
+}
+
+.tooltip-icon:active .tooltip-text,
+.tooltip-icon:focus .tooltip-text {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@media (max-width: 640px) {
+  .tooltip-text {
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    width: 190px;
+    text-align: center;
+  }
+}
+
+/* 8. Make step transitions softer on small screens */
+.step-animation {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(1px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* 9. Back-to-chat button tweak on mobile */
+@media (max-width: 640px) {
+  .back-to-chat-btn {
+    font-size: 0.85rem;
+    padding: 8px 14px;
+  }
+}

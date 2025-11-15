@@ -49,6 +49,7 @@ const ProgressBar = ({ step }: { step: number }) => (
 
       return (
         <div key={index} className="progress-block">
+          {/* Label ABOVE circle */}
           <div
             className="progress-label-vertical"
             style={{
@@ -60,16 +61,18 @@ const ProgressBar = ({ step }: { step: number }) => (
           </div>
 
           <div className="progress-inner">
+            {/* Circle */}
             <div
-              className={`progress-circle ${isActive ? "glow" : ""}`}
+              className={`progress-circle ${isActive ? 'is-active' : ''}`}
               style={{
                 background: isCompleted || isActive ? "var(--brand)" : "#DCE0DA",
-                color: isCompleted || isActive ? "#fff" : "#6E7C7A",
-            }}
-        >
+                color: isCompleted || isActive ? "#fff" : "#6E7C7A"
+              }}
+            >
               {stepNumber}
             </div>
 
+            {/* Line */}
             {index < steps.length - 1 && (
               <div
                 className="progress-line-vertical"
@@ -83,7 +86,7 @@ const ProgressBar = ({ step }: { step: number }) => (
       );
     })}
   </div>
-)
+);
 
 /* ============================================================
    LABEL (Tooltip)
@@ -464,6 +467,30 @@ export default function LoanFormPage() {
       behavior: "smooth"
     });
   }, [step]);
+
+  useEffect(() => {
+  let touchStartX = 0;
+
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    const endX = e.changedTouches[0].clientX;
+
+    if (touchStartX < 40 && endX - touchStartX > 80) {
+      setStep(prev => (prev > 1 ? prev - 1 : prev));
+    }
+  };
+
+  window.addEventListener('touchstart', handleTouchStart);
+  window.addEventListener('touchend', handleTouchEnd);
+
+  return () => {
+    window.removeEventListener('touchstart', handleTouchStart);
+    window.removeEventListener('touchend', handleTouchEnd);
+  };
+}, []);
 
   // Mobile swipe-back gesture
 useEffect(() => {
