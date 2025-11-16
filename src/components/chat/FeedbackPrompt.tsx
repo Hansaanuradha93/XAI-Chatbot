@@ -1,54 +1,45 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-
-interface FeedbackPromptProps {
-  visible: boolean
-  feedback: string
-  submitting: boolean
-  onChange: (value: string) => void
-  onSubmit: () => void
-  onSkip: () => void
-}
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 
 export function FeedbackPrompt({
-  visible,
+  feedbackPending,
   feedback,
-  submitting,
-  onChange,
+  setFeedback,
+  feedbackSubmitting,
   onSubmit,
   onSkip,
-}: FeedbackPromptProps) {
-  if (!visible) return null
+}: {
+  feedbackPending: boolean
+  feedback: string
+  setFeedback: (v: string) => void
+  feedbackSubmitting: boolean
+  onSubmit: () => void
+  onSkip: () => void
+}) {
+  if (!feedbackPending) return null
 
   return (
-    <div className="mt-4 w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-900/90 px-4 py-3 text-sm text-slate-100 shadow-sm">
-      <p className="font-medium text-slate-50">Optional feedback</p>
-      <p className="text-xs text-slate-400">
-        Tell us why you trusted or didn’t trust this response.
+    <div className="bg-gray-100 p-4 rounded-xl mb-3 shadow-sm">
+      <p className="font-semibold text-gray-900 text-sm mb-2">
+        Optional feedback
       </p>
 
-      <div className="mt-2">
-        <Textarea
-          rows={3}
-          value={feedback}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Share your thoughts..."
-        />
-      </div>
+      <Textarea
+        rows={3}
+        value={feedback}
+        onChange={(e) => setFeedback(e.target.value)}
+        placeholder="Share your thoughts…"
+        className="mb-3 bg-white"
+      />
 
-      <div className="mt-3 flex gap-2">
-        <Button size="sm" disabled={submitting} onClick={onSubmit}>
-          Submit feedback
+      <div className="flex gap-2">
+        <Button onClick={onSubmit} disabled={feedbackSubmitting}>
+          Submit
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          type="button"
-          onClick={onSkip}
-          disabled={submitting}
-        >
+
+        <Button variant="outline" onClick={onSkip}>
           Skip
         </Button>
       </div>

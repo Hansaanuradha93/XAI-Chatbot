@@ -1,66 +1,74 @@
-'use client'
+"use client"
 
-import { useEffect, useRef } from 'react'
-import type { Message } from './types'
-import { MessageBubble } from './MessageBubble'
-import { RatingPrompt } from './RatingPrompt'
-import { FeedbackPrompt } from './FeedbackPrompt'
-
-interface ChatMessagesProps {
-  messages: Message[]
-  ratingPending: boolean
-  ratingSubmitting: boolean
-  feedbackPending: boolean
-  feedback: string
-  feedbackSubmitting: boolean
-  onRate: (score: number) => void
-  onFeedbackChange: (value: string) => void
-  onFeedbackSubmit: () => void
-  onFeedbackSkip: () => void
-}
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { MessageBubble } from "./MessageBubble"
+import { RatingPrompt } from "./RatingPrompt"
+import { FeedbackPrompt } from "./FeedbackPrompt"
+import { useEffect, useRef } from "react"
 
 export function ChatMessages({
   messages,
   ratingPending,
   ratingSubmitting,
-  feedbackPending,
-  feedback,
-  feedbackSubmitting,
   onRate,
-  onFeedbackChange,
-  onFeedbackSubmit,
-  onFeedbackSkip,
-}: ChatMessagesProps) {
-  const bottomRef = useRef<HTMLDivElement | null>(null)
+  feedback,
+  setFeedback,
+  feedbackPending,
+  feedbackSubmitting,
+  onSubmitFeedback,
+  onSkipFeedback,
+}: any) {
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, ratingPending, feedbackPending])
 
   return (
-    <section className="flex-1 overflow-hidden">
-      <div className="flex h-full flex-col gap-3 overflow-y-auto px-6 py-4">
-        {messages.map((m, idx) => (
-          <MessageBubble key={idx} message={m} />
-        ))}
+    <ScrollArea className="flex-1 px-6 py-4">
+      <div className="flex flex-col">
+        {messages.map((msg: any, index: number) => {
+          const formatted =
+            msg.text.includes("**Decision") ||
+            msg.text.includes("**Main") ||
+            msg.text.includes("**Conclusion")
 
+          const html = formatted
+            ? msg.text
+                .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+                .replace(/- /g, "• ")
+                .replace(/\n/g, "<br/>")
+            : msg.text
+
+          return (
+            <MessageBubble
+              key={index}
+              sender={msg.sender}
+              text={html}
+              isFormatted={formatted}
+            />
+          )
+        })}
+
+        {/* Rating bubble */}
         <RatingPrompt
-          visible={ratingPending}
-          submitting={ratingSubmitting}
+          ratingPending={ratingPending}
+          ratingSubmitting={ratingSubmitting}
           onRate={onRate}
         />
 
+        {/* Feedback bubble */}
         <FeedbackPrompt
-          visible={feedbackPending}
+          feedbackPending={feedbackPending}
           feedback={feedback}
-          submitting={feedbackSubmitting}
-          onChange={onFeedbackChange}
-          onSubmit={onFeedbackSubmit}
-          onSkip={onFeedbackSkip}
+          setFeedback={setFeedback}
+          feedbackSubmitting={feedbackSubmitting}
+          onSubmit={onSubmitFeedback}
+          onSkip={onSkipFeedback}
         />
 
         <div ref={bottomRef} />
       </div>
-    </section>
+    </ScrollArea>
   )
 }

@@ -1,21 +1,24 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 
-interface FloatingCTAProps {
-  visible: boolean
-  onClick: () => void
-}
-
-export function FloatingCTA({ visible, onClick }: FloatingCTAProps) {
-  if (!visible) return null
-
+export function FloatingCTA({ onClick }: { onClick: () => void }) {
   return (
-    <button
+    <Button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-emerald-500/90 px-4 py-2 text-xs font-semibold text-slate-950 shadow-lg shadow-emerald-500/40 ring-1 ring-emerald-400/80 hover:bg-emerald-400 transition-transform hover:translate-y-[-1px]"
+      size="lg"
+      className="
+        fixed bottom-20 right-5 z-50
+        rounded-full px-6 py-3
+        bg-emerald-600 text-white
+        shadow-[0_8px_22px_rgba(16,185,129,0.35)]
+        hover:shadow-[0_8px_28px_rgba(16,185,129,0.45)]
+        hover:bg-emerald-700
+        active:scale-95
+        transition-all duration-200
+      "
     >
-      Apply for a loan
-    </button>
+      Apply for a Loan
+    </Button>
   )
 }

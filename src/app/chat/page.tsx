@@ -1,325 +1,216 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
-import { useSession } from '@/hooks/useSession'
-import { apiFetch } from '@/lib/apiClient'
-import { Card, CardContent } from '@/components/ui/card'
-import { ChatHeader } from '@/components/chat/ChatHeader'
-import { ChatMessages } from '@/components/chat/ChatMessages'
-import { ChatInput } from '@/components/chat/ChatInput'
-import { FloatingCTA } from '@/components/chat/FloatingCTA'
-import type { Message, LoanResult, ChatContext } from '@/components/chat/types'
+import { useEffect, useState, useRef } from "react"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabaseClient"
+import { useSession } from "@/hooks/useSession"
+import { apiFetch } from "@/lib/apiClient"
+
+import { ChatHeader } from "@/components/chat/ChatHeader"
+import { ChatMessages } from "@/components/chat/ChatMessages"
+import { ChatInput } from "@/components/chat/ChatInput"
+import { FloatingCTA } from "@/components/chat/FloatingCTA"
+
+import { ScrollArea } from "@/components/ui/scroll-area"
+
+interface Message {
+  sender: "user" | "bot"
+  text: string
+}
+
+type LoanResult = {
+  prediction: string
+  explanation?: Record<string, number> | { error?: string } | null
+}
+
+type ChatContext = "loan" | "faq" | null
 
 export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
   const initialGreeting: Message[] = [
-    {
-      sender: 'bot',
-      text: 'Hello! I’m TrustAI — your personal AI loan advisor.',
-    },
-    {
-      sender: 'bot',
-      text: 'You can check your loan eligibility or ask me financial FAQs.',
-    },
+    { sender: "bot", text: "Hello! I’m TrustAI — your personal AI loan advisor." },
+    { sender: "bot", text: "You can check your loan eligibility or ask me financial FAQs." },
   ]
 
   const [messages, setMessages] = useState<Message[]>(initialGreeting)
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState("")
   const [thinking, setThinking] = useState(false)
-  const [lastResult, setLastResult] = useState<LoanResult | null>(null)
   const [context, setContext] = useState<ChatContext>(null)
+  const [lastResult, setLastResult] = useState<LoanResult | null>(null)
 
   const [ratingPending, setRatingPending] = useState(false)
   const [ratingSubmitting, setRatingSubmitting] = useState(false)
+
   const [feedbackPending, setFeedbackPending] = useState(false)
-  const [feedback, setFeedback] = useState('')
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+  const [feedback, setFeedback] = useState("")
   const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
-  const [mode, setMode] = useState<'xai' | 'baseline'>(
-    (typeof window !== 'undefined' &&
-      (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
+  const [mode, setMode] = useState<"xai" | "baseline">(
+    (typeof window !== "undefined" && (localStorage.getItem("chat_mode") as "xai" | "baseline")) || "xai"
   )
 
-  const [userRole, setUserRole] = useState<'admin' | 'user'>('user')
+  const [userRole, setUserRole] = useState<"admin" | "user">("user")
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const toggleMode = () => {
-    const newMode = mode === 'xai' ? 'baseline' : 'xai'
+    const newMode = mode === "xai" ? "baseline" : "xai"
     setMode(newMode)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('chat_mode', newMode)
-    }
+    localStorage.setItem("chat_mode", newMode)
   }
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    router.replace('/')
+    router.replace("/")
   }
 
-  // Load chat history
+  // Scroll on update
   useEffect(() => {
-    const loadChatHistory = async () => {
-      if (!email) return
-      const { data, error } = await supabase
-        .from('chat_history')
-        .select('sender, message')
-        .eq('user_email', email)
-        .order('timestamp', { ascending: true })
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages, ratingPending, feedbackPending, thinking])
 
-      if (error) {
-        console.error('Error loading chat history:', error)
+  // Load history
+  useEffect(() => {
+    const load = async () => {
+      if (!email) return
+      const { data } = await supabase
+        .from("chat_history")
+        .select("sender, message")
+        .eq("user_email", email)
+        .order("timestamp", { ascending: true })
+
+      if (!data || data.length === 0) {
+        setMessages(initialGreeting)
         return
       }
 
-      if (data && data.length > 0) {
-        const pastMessages: Message[] = data.map((m) => ({
-          sender: m.sender as 'user' | 'bot',
-          text: m.message,
-        }))
-        setMessages([...initialGreeting, ...pastMessages])
+      const past = data.map((m) => ({
+        sender: m.sender as "user" | "bot",
+        text: m.message,
+      }))
 
-        const last = pastMessages[pastMessages.length - 1]
-        if (last && last.text.startsWith('Loan Decision')) {
-          setContext('loan')
-          setRatingPending(true)
-        }
-      } else {
-        setMessages(initialGreeting)
+      setMessages([...initialGreeting, ...past])
+
+      const last = past[past.length - 1]
+      if (last?.text.startsWith("Loan Decision")) {
+        setContext("loan")
+        setRatingPending(true)
       }
     }
-    loadChatHistory()
+    load()
   }, [email])
 
-  // Fetch user mode & role
+  // Fetch mode / role
   useEffect(() => {
-    const fetchUserMode = async () => {
+    const fetch = async () => {
       if (!email) return
       try {
         const data = await apiFetch(`/api/v1/users/mode`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         })
 
         if (data.mode) {
           setMode(data.mode)
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('chat_mode', data.mode)
-          }
+          localStorage.setItem("chat_mode", data.mode)
         }
         if (data.role) {
           setUserRole(data.role)
         }
-      } catch (err) {
-        console.error('⚠️ Failed to fetch user mode:', err)
-      }
+      } catch {}
     }
-    fetchUserMode()
+    fetch()
   }, [email])
 
-  const saveMessage = async (sender: 'user' | 'bot', text: string) => {
+  const saveMessage = async (sender: "user" | "bot", text: string) => {
     if (!email) return
-    const { error } = await supabase.from('chat_history').insert({
+    await supabase.from("chat_history").insert({
       user_email: email,
       sender,
       message: text,
       variant: mode,
     })
-    if (error) console.error('Error saving message:', error)
   }
 
-  // FAQ message send
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    setMessages((prev) => [...prev, { sender: 'user', text: trimmed }])
-    saveMessage('user', trimmed)
-    setInput('')
+    setMessages((p) => [...p, { sender: "user", text: trimmed }])
+    saveMessage("user", trimmed)
+    setInput("")
     setThinking(true)
 
     try {
       const data = await apiFetch(`/api/v1/faq/answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: trimmed,
-          user_email: email || 'anonymous',
-        }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: trimmed, user_email: email }),
       })
 
       setThinking(false)
 
       if (data.answer) {
         const botMsg = data.answer
-        setMessages((prev) => [...prev, { sender: 'bot', text: botMsg }])
-        saveMessage('bot', botMsg)
-        setContext('faq')
+        setMessages((p) => [...p, { sender: "bot", text: botMsg }])
+        saveMessage("bot", botMsg)
+        setContext("faq")
         setRatingPending(true)
       } else {
-        const msg = 'Sorry, I couldn’t find an answer for that question.'
-        setMessages((prev) => [...prev, { sender: 'bot', text: msg }])
-        saveMessage('bot', msg)
+        const msg = "Sorry, I couldn’t find an answer for that question."
+        setMessages((p) => [...p, { sender: "bot", text: msg }])
+        saveMessage("bot", msg)
       }
-    } catch (error) {
-      console.error('Error:', error)
+    } catch {
       setThinking(false)
-      const errMsg = 'Error contacting the backend service.'
-      setMessages((prev) => [...prev, { sender: 'bot', text: errMsg }])
-      saveMessage('bot', errMsg)
+      const msg = "Error contacting the backend service."
+      setMessages((p) => [...p, { sender: "bot", text: msg }])
+      saveMessage("bot", msg)
     }
-  }
-
-  // Rating handler
-  const handleRating = async (score: number) => {
-    if (!email) return
-    if (ratingSubmitting) return
-
-    setRatingSubmitting(true)
-    const variant = context === 'loan' ? mode : 'faq'
-
-    const { data, error } = await supabase
-      .from('trust_ratings')
-      .insert({
-        user_email: email,
-        variant,
-        prediction: lastResult?.prediction ?? null,
-        explanation_json: lastResult?.explanation ?? null,
-        trust_score: score,
-        comment: null,
-      })
-      .select('id')
-      .single()
-
-    setRatingSubmitting(false)
-
-    if (error || !data) {
-      console.error('❌ Supabase insert failed:', { error, data })
-      alert('Failed to save rating.')
-      return
-    }
-
-    setRatingGiven(score)
-    setRatingPending(false)
-    setFeedbackPending(true)
-
-    const botMsg1 = `Thanks! Your trust rating (${score}/5) was recorded.`
-    const botMsg2 = 'Would you like to share why you rated it this way?'
-    setMessages((prev) => [
-      ...prev,
-      { sender: 'bot', text: botMsg1 },
-      { sender: 'bot', text: botMsg2 },
-    ])
-    saveMessage('bot', botMsg1)
-    saveMessage('bot', botMsg2)
-  }
-
-  const submitFeedback = async () => {
-    if (!feedback.trim()) return
-    setFeedbackSubmitting(true)
-
-    const { data: latestRating } = await supabase
-      .from('trust_ratings')
-      .select('id')
-      .eq('user_email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (!latestRating) {
-      alert('No rating found.')
-      setFeedbackSubmitting(false)
-      return
-    }
-
-    const { error } = await supabase
-      .from('trust_ratings')
-      .update({ comment: feedback })
-      .eq('id', latestRating.id)
-
-    setFeedbackSubmitting(false)
-    setFeedbackPending(false)
-
-    if (error) {
-      console.error('Feedback update error:', error)
-      alert('Could not save feedback.')
-      return
-    }
-
-    const thankMsg = 'Thank you for sharing your feedback.'
-    setMessages((prev) => [
-      ...prev,
-      { sender: 'user', text: feedback },
-      { sender: 'bot', text: thankMsg },
-    ])
-    saveMessage('user', feedback)
-    saveMessage('bot', thankMsg)
-    setFeedback('')
-  }
-
-  const skipFeedback = () => {
-    setFeedbackPending(false)
-    setFeedback('')
-    const skipMsg = 'Feedback skipped.'
-    setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
-    saveMessage('bot', skipMsg)
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-sm">
-          Loading…
-        </div>
+      <main className="flex items-center justify-center h-screen">
+        <div className="text-xl">Loading…</div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-950 to-slate-900 text-slate-50 px-4 py-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        <Card className="flex h-[80vh] flex-col overflow-hidden">
-          <ChatHeader
-            email={email}
-            mode={mode}
-            userRole={userRole}
-            onToggleMode={toggleMode}
-            onSignOut={signOut}
-            onGoAdmin={() => router.push('/admin')}
-          />
-
-          <CardContent className="flex flex-1 flex-col p-0">
-            <ChatMessages
-              messages={messages}
-              ratingPending={ratingPending}
-              ratingSubmitting={ratingSubmitting}
-              feedbackPending={feedbackPending}
-              feedback={feedback}
-              feedbackSubmitting={feedbackSubmitting}
-              onRate={handleRating}
-              onFeedbackChange={setFeedback}
-              onFeedbackSubmit={submitFeedback}
-              onFeedbackSkip={skipFeedback}
-            />
-          </CardContent>
-
-          <ChatInput
-            value={input}
-            onChange={setInput}
-            onSend={sendMessage}
-            thinking={thinking}
-          />
-        </Card>
-      </div>
-
-      <FloatingCTA
-        visible={!!email}
-        onClick={() => router.push('/loan-form')}
+    <main className="flex flex-col h-screen bg-white">
+      <ChatHeader
+        email={email}
+        mode={mode}
+        userRole={userRole}
+        toggleMode={toggleMode}
+        signOut={signOut}
+        router={router}
       />
+
+      <ScrollArea className="flex-1 px-4 py-4">
+        <ChatMessages
+          messages={messages}
+          ratingPending={ratingPending}
+          feedbackPending={feedbackPending}
+          feedback={feedback}
+          feedbackSubmitting={feedbackSubmitting}
+          ratingSubmitting={ratingSubmitting}
+          handleRating={() => {}}
+          submitFeedback={() => {}}
+          setFeedback={() => {}}
+        />
+
+        <div ref={messagesEndRef} />
+      </ScrollArea>
+
+      <ChatInput input={input} setInput={setInput} sendMessage={sendMessage} />
+
+      {email && <FloatingCTA router={router} />}
     </main>
   )
 }

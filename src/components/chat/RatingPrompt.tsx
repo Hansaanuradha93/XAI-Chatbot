@@ -1,33 +1,33 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-
-interface RatingPromptProps {
-  visible: boolean
-  submitting: boolean
-  onRate: (score: number) => void
-}
+import { Button } from "@/components/ui/button"
 
 export function RatingPrompt({
-  visible,
-  submitting,
+  ratingPending,
+  ratingSubmitting,
   onRate,
-}: RatingPromptProps) {
-  if (!visible) return null
+}: {
+  ratingPending: boolean
+  ratingSubmitting: boolean
+  onRate: (score: number) => void
+}) {
+  if (!ratingPending) return null
 
   return (
-    <div className="mt-4 w-full max-w-md rounded-2xl border border-slate-700/80 bg-slate-900/90 px-4 py-3 text-sm text-slate-100 shadow-sm">
-      <p className="font-medium text-slate-50">
+    <div className="flex flex-col gap-2 bg-gray-100 p-4 rounded-xl mb-3 shadow-sm">
+      <p className="font-semibold text-gray-900 text-sm">
         On a scale of 1–5, how much do you trust this answer?
       </p>
-      <div className="mt-2 flex gap-2">
+
+      <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map((n) => (
           <Button
             key={n}
-            variant="outline"
             size="sm"
-            disabled={submitting}
+            variant="outline"
             onClick={() => onRate(n)}
+            disabled={ratingSubmitting}
+            className="w-8 p-0 font-medium"
           >
             {n}
           </Button>
