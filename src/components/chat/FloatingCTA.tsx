@@ -9,11 +9,12 @@ export function FloatingCTA({ onClick }: { onClick: () => void }) {
       size="lg"
       className="
         fixed bottom-20 right-5 z-50
-        rounded-full px-6 py-3
-        bg-emerald-600 text-white
-        shadow-[0_8px_22px_rgba(16,185,129,0.35)]
-        hover:shadow-[0_8px_28px_rgba(16,185,129,0.45)]
+        rounded-full px-7 py-3
+        bg-emerald-600 text-white font-medium
+        shadow-[0_0_25px_rgba(16,185,129,0.45)]
+        animate-glow
         hover:bg-emerald-700
+        hover:shadow-[0_0_35px_rgba(16,185,129,0.6)]
         active:scale-95
         transition-all duration-200
       "

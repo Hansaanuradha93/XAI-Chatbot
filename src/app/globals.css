@@ -1069,3 +1069,19 @@ input[type='range']::-moz-range-thumb {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 18px rgba(16,185,129,0.35);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(16,185,129,0.55);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(16,185,129,0.35);
+  }
+}
+
+.animate-glow {
+  animation: glowPulse 2.2s ease-in-out infinite;
+}
