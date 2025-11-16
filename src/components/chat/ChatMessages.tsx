@@ -25,8 +25,10 @@ export function ChatMessages({
   }, [messages, ratingPending, feedbackPending])
 
   return (
-    <ScrollArea className="flex-1 px-6 py-4">
-      <div className="flex flex-col">
+    <ScrollArea className="flex-1 px-4 py-4">
+      {/* Centered chat column with responsive max width */}
+      <div className="flex flex-col w-full max-w-3xl mx-auto space-y-3">
+
         {messages.map((msg: any, index: number) => {
           const formatted =
             msg.text.includes("**Decision") ||
