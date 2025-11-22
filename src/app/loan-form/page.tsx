@@ -298,12 +298,12 @@ function Step2({
 
       <div className="form-field">
         <Label tip="Shorter terms reduce lending risk." required>
-          Loan Term (Months)
+          Loan Term (Years)
         </Label>
         <input
           type="number"
           name="loan_term"
-          placeholder="1–12"
+          placeholder="1–20"
           value={form.loan_term}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -743,8 +743,8 @@ export default function LoanFormPage() {
     if (loan <= 0)
       inlineErrors.loan_amount = 'Loan amount must be greater than 0.'
     const lt = Number(form.loan_term)
-    if (lt < 1 || lt > 12)
-      inlineErrors.loan_term = 'Loan term must be 1–12 months.'
+    if (lt < 1 || lt > 20)
+      inlineErrors.loan_term = 'Loan term must be 1–20 years.'
   }
 
   if (step === 4) {
