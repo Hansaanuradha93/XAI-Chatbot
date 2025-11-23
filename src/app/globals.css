@@ -202,6 +202,56 @@ body {
   color: #ffffff;
 }
 
+/* ========== DROPDOWN ========== */
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  cursor: pointer;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 160px;
+  padding: 6px 0;
+  display: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.dropdown-menu.open {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-menu button {
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dropdown-menu button:hover {
+  background: var(--card);
+}
+
 /* ---------- Bubbles ---------- */
 .bubble {
   position: relative;

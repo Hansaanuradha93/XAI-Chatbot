@@ -42,6 +42,15 @@ export default function ChatPage() {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
+const [menuOpen, setMenuOpen] = useState(false);
+
+// Close dropdown when clicking outside
+useEffect(() => {
+  const close = () => setMenuOpen(false);
+  window.addEventListener("click", close);
+  return () => window.removeEventListener("click", close);
+}, []);
+
   // Mode toggle (XAI or Baseline)
   const [mode, setMode] = useState<'xai' | 'baseline'>(
     (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
@@ -273,50 +282,60 @@ useEffect(() => {
   return (
     <main className="chat-container">
       <header className="chat-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h2>TrustAI Chatbot</h2>
-          <span
-            style={{
-              padding: '3px 10px',
-              borderRadius: '8px',
-              background: mode === 'xai' ? '#1e8e3e' : '#888',
-              fontSize: '0.8rem',
-              color: 'white',
-            }}
-          >
-            {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
-          </span>
-        </div>
-          <div className="user-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {/* Profile Icon */}
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  border: mode === 'xai' ? '2px solid #1e8e3e' : '2px solid transparent',
-                  background: '#ccc',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
-                {email ? email.charAt(0).toUpperCase() : '?'}
-              </div>
+  {/* Left side title + mode label */}
+  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <h2>TrustAI Chatbot</h2>
+    <span
+      style={{
+        padding: "3px 10px",
+        borderRadius: "8px",
+        background: mode === "xai" ? "#1e8e3e" : "#888",
+        fontSize: "0.8rem",
+        color: "white",
+      }}
+    >
+      {mode === "xai" ? "Explainable Mode" : "Baseline Mode"}
+    </span>
+  </div>
 
-              {/* Only admins see the toggle + Admin button */}
-              {userRole === 'admin' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={toggleMode} className="button small">Toggle Mode</button>
-                  <button onClick={() => router.push('/admin')} className="admin-btn">Admin</button>
-                </div>
-              )}
+  {/* Avatar + Dropdown */}
+  <div
+  className="dropdown"
+  onClick={(e) => {
+    e.stopPropagation();        // Prevent window click from closing immediately
+    setMenuOpen((o) => !o);
+  }}
+>
+  <div
+    className="chat-avatar dropdown-toggle"
+    style={{
+      width: "38px",
+      height: "38px",
+      borderRadius: "50%",
+      border: mode === "xai" ? "2px solid #1e8e3e" : "2px solid transparent",
+      background: "#ccc",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: "bold",
+      color: "#333",
+      cursor: "pointer",
+    }}
+  >
+    {email ? email.charAt(0).toUpperCase() : "?"}
+  </div>
 
-            <button onClick={signOut} className="danger">Sign out</button>
-      </div>
-      </header>
+  <div className={`dropdown-menu ${menuOpen ? "open" : ""}`}>
+    <button onClick={toggleMode}>Toggle Mode</button>
+
+    {userRole === "admin" && (
+      <button onClick={() => router.push("/admin")}>Admin Panel</button>
+    )}
+
+    <button onClick={signOut}>Sign Out</button>
+  </div>
+</div>
+</header>
 
       {/* ---------- Chat Messages with Clean Avatars ---------- */}
       <section className="chat-box">
