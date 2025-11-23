@@ -284,7 +284,7 @@ useEffect(() => {
       <header className="chat-header">
   {/* Left side title + mode label */}
   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-    <h2>TrustAI Chatbot</h2>
+    <h2>Financial Chatbot</h2>
     <span
       style={{
         padding: "3px 10px",

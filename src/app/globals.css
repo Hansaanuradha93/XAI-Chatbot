@@ -7,7 +7,7 @@
   --text: #1D1F23;        /* Primary text */
   --muted: #6E7C7A;       /* Secondary muted text */
   --bot-bg: #F4F4F4;      /* Bot bubble background */
-  --user-bg: #1D1F23;     /* User bubble background */
+  --user-bg: #334047;     /* User bubble background */
 }
 
 /* Global box sizing so width:100% respects padding */

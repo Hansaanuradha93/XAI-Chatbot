@@ -246,7 +246,7 @@ function Step2({
 
       <div className="form-field">
         <Label tip="Your total yearly income before tax." required>
-          Annual Income
+          Annual Income (LKR)
         </Label>
         <input
           type="number"
@@ -272,7 +272,7 @@ function Step2({
 
       <div className="form-field">
         <Label tip="How much money you want to borrow." required>
-          Loan Amount
+          Loan Amount (LKR)
         </Label>
         <input
           type="number"
@@ -363,7 +363,7 @@ function Step3({
 
       <div className="form-field">
         <Label tip="Higher score increases approval chances.">
-          Credit Score: {form.cibil_score} ({cibilCategory})
+          Credit Score: {form.cibil_score}
         </Label>
         <input
           type="range"
@@ -410,7 +410,7 @@ function Step4({
 
       <div className="form-field">
         <Label tip="Value of your house or apartment." required>
-          Residential Assets
+          Residential Assets (LKR)
         </Label>
         <input
           name="residential_assets_value"
@@ -439,7 +439,7 @@ function Step4({
 
       <div className="form-field">
         <Label tip="Value of shops, offices, commercial property." required>
-          Commercial Assets
+          Commercial Assets (LKR)
         </Label>
         <input
           name="commercial_assets_value"
@@ -497,7 +497,7 @@ function Step4({
 
       <div className="form-field">
         <Label tip="Bank savings, deposits, balances." required>
-          Bank Assets
+          Bank Assets (LKR)
         </Label>
         <input
           name="bank_asset_value"
@@ -573,7 +573,7 @@ function Step5({
       <div className="step-header">
         <h2>Review Your Application</h2>
         <p className="step-subtitle">
-          Double-check your details before we send this to the loan engine.
+          Please double check your information before submitting your loan application.
         </p>
       </div>
 
@@ -600,7 +600,7 @@ function Step5({
         </p>
 
         <p>
-          <b>Credit Score:</b> {form.cibil_score} ({cibilCategory})
+          <b>Credit Score:</b> {form.cibil_score}
         </p>
       </div>
     </>
