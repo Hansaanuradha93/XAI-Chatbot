@@ -6,12 +6,11 @@ import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { ADMIN_EMAILS } from '@/lib/adminConfig'
 
-// ===== Read CSS variables (TrustAI brand palette) =====
+// ===== Read CSS variables =====
 function cssVar(name: string) {
   if (typeof window === "undefined") return ""
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 }
-
 const BRAND = cssVar("--brand")
 const BRAND_HOVER = cssVar("--brand-hover")
 const MUTED = cssVar("--muted")
@@ -29,7 +28,6 @@ import {
   Legend,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 // ===== Types =====
@@ -57,14 +55,14 @@ export default function AdminPage() {
   const [rows, setRows] = useState<SurveyRow[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
-  // ================= Gate: Admin Only =================
+  // Gate: only Admins
   useEffect(() => {
     if (!loading && (!email || !ADMIN_EMAILS.includes(email))) {
       router.replace('/chat')
     }
   }, [email, loading, router])
 
-  // ================= Fetch Survey Data =================
+  // Fetch survey results
   useEffect(() => {
     const fetchData = async () => {
       if (!email || !ADMIN_EMAILS.includes(email)) return
@@ -75,26 +73,21 @@ export default function AdminPage() {
         .order('created_at', { ascending: false })
 
       if (!error && data) setRows(data as SurveyRow[])
-      else console.error("Survey fetch failed:", error)
-
       setLoadingData(false)
     }
-
     fetchData()
   }, [email])
 
-  // ================= Helpers =================
+  // Helpers
   const byVariant = (v: Variant) => rows.filter(r => r.variant === v)
-  const mean = (arr: number[]) =>
-    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
-
+  const mean = (list: number[]) => list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0
   const uniqUsers = new Set(rows.map(r => r.user_email)).size
 
   const total = rows.length
   const baselineN = byVariant('baseline').length
   const xaiN = byVariant('xai').length
 
-  // ================= SECTION 2 — Mean Trust =================
+  // SECTION 2: Mean Trust
   const baselineTrust = mean(byVariant('baseline').map(r => r.trust_score))
   const xaiTrust = mean(byVariant('xai').map(r => r.trust_score))
 
@@ -107,7 +100,6 @@ export default function AdminPage() {
         backgroundColor: [MUTED, BRAND],
         borderColor: BORDER,
         borderWidth: 1.5,
-        hoverBackgroundColor: [cssVar("--border"), BRAND_HOVER],
       },
     ],
   }
@@ -120,7 +112,7 @@ export default function AdminPage() {
     plugins: { legend: { labels: { color: TEXT } } },
   }
 
-  // ================= SECTION 3 — 6 Dimensions =================
+  // SECTION 3: Dimensions
   const dims = [
     { key: 'trust_score', label: 'Trust' },
     { key: 'reasoning_confidence_score', label: 'Reasoning Confidence' },
@@ -150,76 +142,52 @@ export default function AdminPage() {
         borderColor: BORDER,
         borderWidth: 1.5,
       }
-    ]
+    ],
   }
 
-  const dimsOptions = {
-    scales: {
-      x: { ticks: { color: TEXT }, grid: { color: BORDER } },
-      y: { min: 0, max: 5, ticks: { color: TEXT, stepSize: 1 }, grid: { color: BORDER } },
-    },
-    plugins: { legend: { labels: { color: TEXT } } },
-  }
+  const dimsOptions = meanTrustOptions
 
-  // ================= SECTION 4 — Trust Distribution =================
-  const buckets = [1, 2, 3, 4, 5]
-  const baselineDist = buckets.map(n =>
-    byVariant('baseline').filter(r => r.trust_score === n).length
-  )
-  const xaiDist = buckets.map(n =>
-    byVariant('xai').filter(r => r.trust_score === n).length
-  )
+  // SECTION 4: Distribution
+  const buckets = [1,2,3,4,5]
+  const baselineDist = buckets.map(b => byVariant('baseline').filter(r => r.trust_score === b).length)
+  const xaiDist = buckets.map(b => byVariant('xai').filter(r => r.trust_score === b).length)
 
   const distData = {
     labels: buckets.map(String),
     datasets: [
-      {
-        label: "Baseline",
-        data: baselineDist,
-        backgroundColor: MUTED,
-        borderColor: BORDER,
-        borderWidth: 1.5,
-      },
-      {
-        label: "XAI",
-        data: xaiDist,
-        backgroundColor: BRAND,
-        borderColor: BORDER,
-        borderWidth: 1.5,
-      }
+      { label: "Baseline", data: baselineDist, backgroundColor: MUTED, borderColor: BORDER, borderWidth: 1.5 },
+      { label: "XAI", data: xaiDist, backgroundColor: BRAND, borderColor: BORDER, borderWidth: 1.5 },
     ]
   }
 
   const distOptions = {
     scales: {
-      x: { ticks: { color: TEXT }, grid: { color: BORDER } },
-      y: { beginAtZero: true, ticks: { color: TEXT, stepSize: 1 }, grid: { color: BORDER } },
+      x: { ticks: { color: TEXT }, grid: { color: BORDER }},
+      y: { beginAtZero: true, ticks: { stepSize: 1, color: TEXT }, grid: { color: BORDER }},
     },
     plugins: { legend: { labels: { color: TEXT } } },
   }
 
-  // ================= SECTION 5 — Word Cloud =================
+  // SECTION 5: Word Cloud
   const topWords = useMemo(() => {
     const freq: Record<string, number> = {}
-    const stop = new Set([
-      'the','and','for','with','from','that','this','your','have','was','were',
-      'about','into','over','under','very','much','more','less','than','then',
-      'also','just','been','they','them','our','are','not','but','too'
-    ])
+    const stop = new Set(['the','and','for','with','from','that','this','your','have','was',
+      'were','about','into','very','more','less','then','also','just','they','are'])
 
     rows.forEach(r => {
       if (!r.comment) return
-      r.comment
-        .toLowerCase()
+      r.comment.toLowerCase()
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
         .filter(w => w.length > 2 && !stop.has(w))
-        .forEach(w => { freq[w] = (freq[w] || 0) + 1 })
+        .forEach(w => freq[w] = (freq[w] || 0) + 1)
     })
 
-    const entries = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, 40)
-    const max = entries[0]?.[1] ?? 1
+    const entries = Object.entries(freq)
+      .sort((a: [string,number], b: [string,number]) => b[1] - a[1])
+      .slice(0, 40)
 
+    const max = entries[0]?.[1] ?? 1
     return entries.map(([word, count]) => ({
       word,
       count,
@@ -228,7 +196,7 @@ export default function AdminPage() {
     }))
   }, [rows])
 
-  // ================= CSV Export =================
+  // CSV Export — fixed type
   const downloadCSV = () => {
     const header = [
       'id','created_at','user_email','variant','prediction',
@@ -238,7 +206,11 @@ export default function AdminPage() {
 
     const csv = [
       header.join(','),
-      ...rows.map(r => header.map(h => JSON.stringify((r as any)[h] ?? '')).join(','))
+      ...rows.map(r =>
+        header
+          .map(h => JSON.stringify((r as Record<string,string|number|null>)[h] ?? ""))
+          .join(',')
+      )
     ].join('\n')
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
@@ -250,75 +222,60 @@ export default function AdminPage() {
     URL.revokeObjectURL(url)
   }
 
-  // ================= Render =================
+  // UI Conditions
   if (loading) return <div className="page-center"><div className="card">Checking permissions…</div></div>
   if (!email || !ADMIN_EMAILS.includes(email)) return <div className="page-center"><div className="card">Access denied</div></div>
   if (loadingData) return <div className="page-center"><div className="card">Fetching analytics…</div></div>
 
+  // ================= Render =================
   return (
     <main className="admin-container">
-      <header className="chat-header" style={{ position: 'sticky', top: 0 }}>
+      <header className="chat-header" style={{ position:'sticky', top:0 }}>
         <h2>📊 Trust & XAI Evaluation Dashboard</h2>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display:'flex', gap:'10px' }}>
           <button className="button secondary" onClick={() => router.push('/chat')}>Back</button>
           <button className="button" onClick={downloadCSV}>Download CSV</button>
         </div>
       </header>
 
-      {/* SECTION 1 — Basic Stats */}
+      {/* SECTION 1 */}
       <section className="admin-section">
         <h3 className="admin-section-title">Section 1 — Sample Overview</h3>
         <div className="stats-grid">
-          {[
-            ["Total Responses", total],
-            ["Unique Users", uniqUsers],
-            ["Baseline", baselineN],
-            ["XAI", xaiN],
-          ].map(([label, value]) => (
+          {[["Total Responses", total],["Unique Users", uniqUsers],["Baseline", baselineN],["XAI", xaiN]].map(([label,value]) => (
             <div className="stat-card" key={label}>
               <div className="stat-label">{label}</div>
-              <div className="stat-value">{value as any}</div>
+              <div className="stat-value">{value}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* SECTION 2 — Mean Trust */}
+      {/* SECTION 2 */}
       <section className="admin-section">
         <h3 className="admin-section-title">Section 2 — Mean Trust</h3>
-        <div className="chart-card">
-          <Bar data={meanTrustData} options={meanTrustOptions} />
-        </div>
+        <div className="chart-card"><Bar data={meanTrustData} options={meanTrustOptions} /></div>
       </section>
 
-      {/* SECTION 3 — Dimensions */}
+      {/* SECTION 3 */}
       <section className="admin-section">
         <h3 className="admin-section-title">Section 3 — Six Trust Dimensions</h3>
-        <div className="chart-card">
-          <Bar data={dimsData} options={dimsOptions} />
-        </div>
+        <div className="chart-card"><Bar data={dimsData} options={dimsOptions} /></div>
       </section>
 
-      {/* SECTION 4 — Distribution */}
+      {/* SECTION 4 */}
       <section className="admin-section">
         <h3 className="admin-section-title">Section 4 — Distribution (1–5)</h3>
-        <div className="chart-card">
-          <Bar data={distData} options={distOptions} />
-        </div>
+        <div className="chart-card"><Bar data={distData} options={distOptions} /></div>
       </section>
 
-      {/* SECTION 5 — Word Cloud */}
+      {/* SECTION 5 */}
       <section className="admin-section">
         <h3 className="admin-section-title">Section 5 — Word Cloud</h3>
-
         {topWords.length ? (
           <div className="word-cloud">
-            {topWords.map((w, i) => (
-              <span
-                key={i}
-                className="word-token"
-                style={{ fontSize: w.size, opacity: w.opacity }}
-              >
+            {topWords.map((w,i) => (
+              <span key={i} style={{ fontSize:w.size, opacity:w.opacity }} className="word-token">
                 {w.word}
               </span>
             ))}
