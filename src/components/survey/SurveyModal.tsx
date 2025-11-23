@@ -33,30 +33,40 @@ export function SurveyModal({
     repeat_usage_score: null,
     comfort_score: null,
   })
+
   const [comment, setComment] = useState('')
 
   const setVal = (k: keyof Scores, v: number) =>
     setScores((s) => ({ ...s, [k]: v }))
 
   const allAnswered = Object.values(scores).every((v) => typeof v === 'number')
+
   if (!open) return null
 
   return (
     <div className="survey-overlay" aria-modal aria-hidden={!open} role="dialog">
       <div className="survey-modal">
+
+        {/* HEADER */}
         <div className="survey-header">
           <h3 style={{ margin: 0 }}>Quick Survey</h3>
           <button className="survey-close" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
-        <p className="survey-sub">
-          Help us evaluate the experience.
-          (Prediction: <b>{defaultPrediction}</b>)
+        {/* NEW INSTRUCTIONS */}
+        <p className="survey-instructions">
+          Please rate each statement about the loan decision you received.<br />
+          Select a number from <b>1 (Strongly disagree)</b> to <b>5 (Strongly agree)</b>.<br />
+          This survey helps improve the AI — it does <b>not</b> affect your loan result.
         </p>
 
-        <div className="survey-group">
+        <p className="survey-sub">
+          (Prediction shown: <b>{defaultPrediction}</b>)
+        </p>
 
-          {/* --- Updated 6 research-backed questions --- */}
+<div className="survey-scroll-area">
+        {/* QUESTIONS */}
+        <div className="survey-group">
 
           <SurveyRow
             label="I trust the loan decision provided by the AI."
@@ -93,9 +103,9 @@ export function SurveyModal({
             value={scores.comfort_score}
             onChange={(v) => setVal('comfort_score', v)}
           />
-
         </div>
 
+        {/* COMMENT FIELD */}
         <div className="survey-textarea">
           <label htmlFor="survey-comment">Any comments? (optional)</label>
           <textarea
@@ -106,7 +116,9 @@ export function SurveyModal({
             placeholder="What increased or reduced your trust in this decision?"
           />
         </div>
+    </div>
 
+        {/* ACTION BUTTONS */}
         <div className="survey-actions">
           <button className="button secondary" onClick={onClose} disabled={loading}>
             Later

@@ -1035,6 +1035,18 @@ input[type='range']::-moz-range-thumb {
   z-index: 1000;
   padding: 1rem;
 }
+/* ===== Survey modal overlay ===== */
+.survey-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(29,31,35,0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* ===== Survey Modal ===== */
 .survey-modal {
   background: var(--card);
   color: var(--text);
@@ -1043,19 +1055,147 @@ input[type='range']::-moz-range-thumb {
   border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: 0 12px 38px rgba(0,0,0,0.18);
-  padding: 16px;
+  padding: 18px 20px 22px;
+  animation: fadeIn 0.25s ease;
+  max-height: 90vh;          /* <— THIS FIXES IT */
+  display: flex;
+  flex-direction: column;
 }
-.survey-header { display: flex; align-items: center; justify-content: space-between; }
-.survey-close { border: none; background: transparent; font-size: 18px; cursor: pointer; color: var(--muted); }
-.survey-sub { margin: 6px 0 14px 0; color: var(--muted); font-size: 0.95rem; }
-.survey-group { display: grid; gap: 12px; }
-.survey-row { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
-.survey-label { font-size: 0.95rem; margin-bottom: 8px; }
-.survey-scale { display: flex; gap: 8px; }
-.survey-scale .pill { border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; font-size: 0.9rem; cursor: pointer; user-select: none; }
-.survey-scale .pill input { display: none; }
-.survey-scale .pill.active { background: var(--brand); color: var(--text); border-color: var(--brand); }
-.survey-textarea { margin-top: 12px; }
-.survey-textarea label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: var(--muted); }
-.survey-textarea textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: #fff; color: var(--text); font-size: 0.95rem; }
-.survey-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+
+/* Header */
+.survey-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.survey-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: opacity 0.15s;
+}
+.survey-close:hover {
+  opacity: 0.75;
+}
+
+/* ===== NEW: Instructions ===== */
+.survey-instructions {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 10px 0 16px 0;
+}
+
+/* Subheader */
+.survey-sub {
+  margin: 4px 0 16px 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Group of questions */
+.survey-group {
+  display: grid;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Each question block */
+.survey-row {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+/* Question label */
+.survey-label {
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Likert (1–5) scale */
+.survey-scale {
+  display: flex;
+  gap: 8px;
+}
+
+.survey-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 10px;
+}
+
+/* Pills */
+.survey-scale .pill {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.survey-scale .pill input {
+  display: none;
+}
+
+.survey-scale .pill:hover {
+  background: #f1f4f3;
+}
+
+.survey-scale .pill.active {
+  background: var(--brand);
+  color: var(--text);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(142,182,155,0.25);
+}
+
+/* ===== Comments Section ===== */
+.survey-textarea {
+  margin-top: 20px;
+}
+
+.survey-textarea label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+.survey-textarea textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff;
+  color: var(--text);
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+/* ===== Buttons ===== */
+.survey-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
