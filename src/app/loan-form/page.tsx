@@ -818,13 +818,16 @@ export default function LoanFormPage() {
             user_email: email,
             sender: 'user',
             message: JSON.stringify(form),
-            variant: mode
+            variant: mode,
+            context: 'loan'
           },
           {
             user_email: email,
             sender: 'bot',
             message: data.human_message || data.prediction,
-            variant: mode
+            variant: mode,
+            context: 'loan',
+            prediction: data.prediction
           }
         ])
       }

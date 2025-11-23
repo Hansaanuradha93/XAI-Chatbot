@@ -5,16 +5,13 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
+import { SurveyModal } from '@/components/survey/SurveyModal'
 
 interface Message {
   sender: 'user' | 'bot'
   text: string
-  type?: 'text' | 'action'
-}
-
-type LoanResult = {
-  prediction: string
-  explanation?: Record<string, number> | { error?: string } | null
+  context?: string | null
+  prediction?: string | null
 }
 
 type ChatContext = 'loan' | 'faq' | null
@@ -23,35 +20,28 @@ export default function ChatPage() {
   const router = useRouter()
   const { email, loading } = useSession(true)
 
-  // ✅ Clean greeting — no emojis
+  // Initial greeting
   const initialGreeting: Message[] = [
     { sender: 'bot', text: 'Hello! I’m TrustAI — your personal AI loan advisor.' },
     { sender: 'bot', text: 'You can check your loan eligibility or ask me financial FAQs.' },
   ]
 
+  // State
   const [messages, setMessages] = useState<Message[]>(initialGreeting)
   const [input, setInput] = useState('')
   const [thinking, setThinking] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [lastResult, setLastResult] = useState<LoanResult | null>(null)
   const [context, setContext] = useState<ChatContext>(null)
-  const [ratingPending, setRatingPending] = useState(false)
-  const [ratingSubmitting, setRatingSubmitting] = useState(false)
-  const [feedbackPending, setFeedbackPending] = useState(false)
-  const [feedback, setFeedback] = useState('')
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
-  const [ratingGiven, setRatingGiven] = useState<number | null>(null)
 
-const [menuOpen, setMenuOpen] = useState(false);
+  // Dropdown menu
+  const [menuOpen, setMenuOpen] = useState(false)
+  useEffect(() => {
+    const close = () => setMenuOpen(false)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [])
 
-// Close dropdown when clicking outside
-useEffect(() => {
-  const close = () => setMenuOpen(false);
-  window.addEventListener("click", close);
-  return () => window.removeEventListener("click", close);
-}, []);
-
-  // Mode toggle (XAI or Baseline)
+  // A/B testing state
   const [mode, setMode] = useState<'xai' | 'baseline'>(
     (typeof window !== 'undefined' && (localStorage.getItem('chat_mode') as 'xai' | 'baseline')) || 'xai'
   )
@@ -69,17 +59,19 @@ useEffect(() => {
     router.replace('/')
   }
 
+  // Scroll to bottom on updates
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, thinking, ratingPending, feedbackPending])
+  }, [messages, thinking])
 
-  // 🔹 Load chat history from Supabase
+  // Load chat history
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!email) return
+
       const { data, error } = await supabase
         .from('chat_history')
-        .select('sender, message')
+        .select('sender, message, context, prediction')
         .eq('user_email', email)
         .order('timestamp', { ascending: true })
 
@@ -89,62 +81,156 @@ useEffect(() => {
       }
 
       if (data && data.length > 0) {
-        const pastMessages = data.map((m) => ({
+        const mapped = data.map((m) => ({
           sender: m.sender as 'user' | 'bot',
           text: m.message,
+          context: m.context,
+          prediction: m.prediction,
         }))
-        setMessages([...initialGreeting, ...pastMessages])
-
-        const last = pastMessages[pastMessages.length - 1]
-        if (last && last.text.startsWith('Loan Decision')) {
-          setContext('loan')
-          setRatingPending(true)
-        }
+        setMessages([...initialGreeting, ...mapped])
       } else {
         setMessages(initialGreeting)
       }
     }
+
     loadChatHistory()
   }, [email])
 
-// 🔹 Fetch user mode allocation from backend
-useEffect(() => {
-  const fetchUserMode = async () => {
-    if (!email) return
-    try {
-      const data = await apiFetch(`/api/v1/users/mode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
+  // Fetch user A/B mode + role
+  useEffect(() => {
+    const fetchUserMode = async () => {
+      if (!email) return
+      try {
+        const data = await apiFetch(`/api/v1/users/mode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
 
-      if (data.mode) {
-        setMode(data.mode)
-        localStorage.setItem('chat_mode', data.mode)
+        if (data.mode) {
+          setMode(data.mode)
+          localStorage.setItem('chat_mode', data.mode)
+        }
+        if (data.role) {
+          setUserRole(data.role)
+        }
+      } catch (err) {
+        console.error('⚠️ Failed to fetch user mode:', err)
       }
-      if (data.role) {
-        setUserRole(data.role)
-      }
-    } catch (err) {
-      console.error('⚠️ Failed to fetch user mode:', err)
     }
-  }
-  fetchUserMode()
-}, [email])
 
-  // 🔹 Save message
+    fetchUserMode()
+  }, [email])
+
+  // Save message helper
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
     if (!email) return
+
     const { error } = await supabase.from('chat_history').insert({
       user_email: email,
       sender,
       message: text,
       variant: mode,
     })
+
     if (error) console.error('Error saving message:', error)
   }
 
-  // --- FAQ Message ---
+  // ============================================================
+  //                 SURVEY INTEGRATION (FINAL)
+  // ============================================================
+
+  const [surveyOpen, setSurveyOpen] = useState(false)
+  const [surveySubmitting, setSurveySubmitting] = useState(false)
+  const [pendingSurveyPrediction, setPendingSurveyPrediction] = useState<string | null>(null)
+  const [hasTriggered, setHasTriggered] = useState(false)
+  const surveyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Watch for new loan decisions using structured metadata
+  useEffect(() => {
+    if (!messages.length) return
+
+    const last = messages[messages.length - 1]
+
+    const isLoanDecision =
+      last.sender === 'bot' &&
+      last.context === 'loan' &&
+      typeof last.prediction === 'string'
+
+    if (!isLoanDecision) return
+
+    // If we've already shown survey for this decision: skip
+    if (hasTriggered && pendingSurveyPrediction === last.prediction) return
+
+    // Set it
+    setPendingSurveyPrediction(last.prediction!)
+    setContext('loan')
+
+    // Delay survey so user reads the decision
+    if (surveyTimerRef.current) clearTimeout(surveyTimerRef.current)
+
+    surveyTimerRef.current = setTimeout(() => {
+      setSurveyOpen(true)
+      setHasTriggered(true)
+    }, 8000) // 8 seconds
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages])
+
+  useEffect(() => {
+    return () => {
+      if (surveyTimerRef.current) clearTimeout(surveyTimerRef.current)
+    }
+  }, [])
+
+  const submitSurvey = async (payload: {
+    trust: {
+      trust_score: number | null
+      accuracy_score: number | null
+      clarity_score: number | null
+      confidence_score: number | null
+      repeat_usage_score: number | null
+    }
+    feedback?: string
+  }) => {
+    if (!email || !pendingSurveyPrediction) {
+      setSurveyOpen(false)
+      return
+    }
+
+    setSurveySubmitting(true)
+
+    try {
+      await apiFetch(`/api/v1/survey/loan-trust`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_email: email,
+          variant: mode,
+          prediction: pendingSurveyPrediction,
+          trust: payload.trust,
+          feedback: payload.feedback,
+        }),
+      })
+
+      const thanks = 'Thanks for completing the trust survey!'
+      setMessages((prev) => [...prev, { sender: 'bot', text: thanks }])
+      saveMessage('bot', thanks)
+    } catch (err) {
+      console.error('❌ Survey submit failed:', err)
+      const failMsg = '⚠️ Could not submit the survey. Please try again later.'
+      setMessages((prev) => [...prev, { sender: 'bot', text: failMsg }])
+      saveMessage('bot', failMsg)
+    } finally {
+      setSurveySubmitting(false)
+      setSurveyOpen(false)
+    }
+  }
+
+  // ============================================================
+  //                      SEND FAQ MESSAGE
+  // ============================================================
+
   const sendMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
@@ -161,10 +247,9 @@ useEffect(() => {
         body: JSON.stringify({
           query: trimmed,
           user_email: email || 'anonymous',
-        })
+        }),
       })
 
-      // const data = await res.json()
       setThinking(false)
 
       if (data.answer) {
@@ -172,7 +257,6 @@ useEffect(() => {
         setMessages((prev) => [...prev, { sender: 'bot', text: botMsg }])
         saveMessage('bot', botMsg)
         setContext('faq')
-        setRatingPending(true)
       } else {
         const msg = 'Sorry, I couldn’t find an answer for that question.'
         setMessages((prev) => [...prev, { sender: 'bot', text: msg }])
@@ -180,96 +264,16 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Error:', error)
-      setThinking(false)
       const errMsg = 'Error contacting the backend service.'
       setMessages((prev) => [...prev, { sender: 'bot', text: errMsg }])
       saveMessage('bot', errMsg)
+      setThinking(false)
     }
   }
 
-  // --- Rating Handler ---
-  const handleRating = async (score: number) => {
-    if (!email) return
-    if (ratingSubmitting) return
-
-    setRatingSubmitting(true)
-    const variant = context === 'loan' ? mode : 'faq'
-
-    const { data, error } = await supabase
-      .from('trust_ratings')
-      .insert({
-        user_email: email,
-        variant,
-        prediction: lastResult?.prediction ?? null,
-        explanation_json: lastResult?.explanation ?? null,
-        trust_score: score,
-        comment: null,
-      })
-      .select('id')
-      .single()
-
-    setRatingSubmitting(false)
-
-    if (error || !data) {
-      console.error('❌ Supabase insert failed:', { error, data })
-      alert('Failed to save rating.')
-      return
-    }
-
-    setRatingGiven(score)
-    setRatingPending(false)
-    setFeedbackPending(true)
-
-    const botMsg1 = `Thanks! Your trust rating (${score}/5) was recorded.`
-    const botMsg2 = 'Would you like to share why you rated it this way?'
-    setMessages((prev) => [...prev, { sender: 'bot', text: botMsg1 }, { sender: 'bot', text: botMsg2 }])
-    saveMessage('bot', botMsg1)
-    saveMessage('bot', botMsg2)
-  }
-
-  // --- Feedback Handler ---
-  const submitFeedback = async () => {
-    if (!feedback.trim()) return
-    setFeedbackSubmitting(true)
-
-    const { data: latestRating } = await supabase
-      .from('trust_ratings')
-      .select('id')
-      .eq('user_email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (!latestRating) {
-      alert('No rating found.')
-      setFeedbackSubmitting(false)
-      return
-    }
-
-    const { error } = await supabase
-      .from('trust_ratings')
-      .update({ comment: feedback })
-      .eq('id', latestRating.id)
-
-    setFeedbackSubmitting(false)
-    setFeedbackPending(false)
-
-    if (error) {
-      console.error('Feedback update error:', error)
-      alert('Could not save feedback.')
-      return
-    }
-
-    const thankMsg = 'Thank you for sharing your feedback.'
-    setMessages((prev) => [
-      ...prev,
-      { sender: 'user', text: feedback },
-      { sender: 'bot', text: thankMsg },
-    ])
-    saveMessage('user', feedback)
-    saveMessage('bot', thankMsg)
-    setFeedback('')
-  }
+  // ============================================================
+  //                       RENDER PAGE
+  // ============================================================
 
   if (loading) {
     return (
@@ -282,76 +286,71 @@ useEffect(() => {
   return (
     <main className="chat-container">
       <header className="chat-header">
-  {/* Left side title + mode label */}
-  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-    <h2>Financial Chatbot</h2>
-    <span
-      style={{
-        padding: "3px 10px",
-        borderRadius: "8px",
-        background: mode === "xai" ? "#1e8e3e" : "#888",
-        fontSize: "0.8rem",
-        color: "white",
-      }}
-    >
-      {mode === "xai" ? "Explainable Mode" : "Baseline Mode"}
-    </span>
-  </div>
+        {/* Left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2>Financial Chatbot</h2>
+          <span
+            style={{
+              padding: '3px 10px',
+              borderRadius: '8px',
+              background: mode === 'xai' ? '#1e8e3e' : '#888',
+              fontSize: '0.8rem',
+              color: 'white',
+            }}
+          >
+            {mode === 'xai' ? 'Explainable Mode' : 'Baseline Mode'}
+          </span>
+        </div>
 
-  {/* Avatar + Dropdown */}
-  <div
-  className="dropdown"
-  onClick={(e) => {
-    e.stopPropagation();        // Prevent window click from closing immediately
-    setMenuOpen((o) => !o);
-  }}
->
-  <div
-    className="chat-avatar dropdown-toggle"
-    style={{
-      width: "38px",
-      height: "38px",
-      borderRadius: "50%",
-      border: mode === "xai" ? "2px solid #1e8e3e" : "2px solid transparent",
-      background: "#ccc",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontWeight: "bold",
-      color: "#333",
-      cursor: "pointer",
-    }}
-  >
-    {email ? email.charAt(0).toUpperCase() : "?"}
-  </div>
+        {/* Avatar + Dropdown */}
+        <div
+          className="dropdown"
+          onClick={(e) => {
+            e.stopPropagation()
+            setMenuOpen((o) => !o)
+          }}
+        >
+          <div
+            className="chat-avatar dropdown-toggle"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: mode === 'xai' ? '2px solid #1e8e3e' : '2px solid transparent',
+              background: '#ccc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              color: '#333',
+              cursor: 'pointer',
+            }}
+          >
+            {email ? email.charAt(0).toUpperCase() : '?'}
+          </div>
 
-  <div className={`dropdown-menu ${menuOpen ? "open" : ""}`}>
-    <button onClick={toggleMode}>Toggle Mode</button>
+          <div className={`dropdown-menu ${menuOpen ? 'open' : ''}`}>
+            <button onClick={toggleMode}>Toggle Mode</button>
+            {userRole === 'admin' && <button onClick={() => router.push('/admin')}>Admin Panel</button>}
+            <button onClick={signOut}>Sign Out</button>
+          </div>
+        </div>
+      </header>
 
-    {userRole === "admin" && (
-      <button onClick={() => router.push("/admin")}>Admin Panel</button>
-    )}
-
-    <button onClick={signOut}>Sign Out</button>
-  </div>
-</div>
-</header>
-
-      {/* ---------- Chat Messages with Clean Avatars ---------- */}
+      {/* Messages */}
       <section className="chat-box">
         {messages.map((msg, i) => {
           const isBot = msg.sender === 'bot'
-          const isDetailedExplanation =
+          const isDetailed =
             msg.text.includes('**Decision Outcome') ||
             msg.text.includes('**Main Financial Factors') ||
             msg.text.includes('**Conclusion')
 
-          // ✅ Format message text (bold, bullet points, spacing) for human_message
-          const formattedText = isDetailedExplanation
+          const formatted = isDetailed
             ? msg.text
-                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // bold
-                .replace(/- /g, '• ') // bullet points
-                .replace(/\n/g, '<br/>') // line breaks
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/- /g, '• ')
+                .replace(/\n/g, '<br/>')
             : msg.text
 
           return (
@@ -359,73 +358,20 @@ useEffect(() => {
               <div className={`chat-avatar ${msg.sender}`}>
                 <span className="avatar-initial">{isBot ? 'AI' : 'U'}</span>
               </div>
-              {/* ✅ Keep bubble colors same, only format text */}
+
               <div
                 className={`bubble ${msg.sender}`}
                 style={{
                   whiteSpace: 'pre-line',
                   lineHeight: 1.6,
                   fontSize: '0.95rem',
-                  fontFamily: 'Inter, sans-serif',
                 }}
-                dangerouslySetInnerHTML={{ __html: formattedText }}
+                dangerouslySetInnerHTML={{ __html: formatted }}
               />
             </div>
           )
         })}
 
-        {/* Rating Prompt */}
-        {ratingPending && (
-          <div className="bubble bot">
-            <b>On a scale of 1–5, how much do you trust this answer?</b>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} className="button" disabled={ratingSubmitting} onClick={() => handleRating(n)}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Feedback Prompt */}
-        {feedbackPending && (
-          <div className="bubble bot">
-            <b>Optional Feedback</b>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Share your thoughts..."
-              rows={3}
-              style={{
-                width: '100%',
-                marginTop: '8px',
-                borderRadius: '6px',
-                border: '1px solid var(--border)',
-                background: 'var(--card)',
-                color: 'var(--text)',
-                padding: '6px',
-              }}
-            />
-            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-              <button className="button" disabled={feedbackSubmitting} onClick={submitFeedback}>
-                Submit Feedback
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => {
-                  setFeedbackPending(false)
-                  setFeedback('')
-                  const skipMsg = 'Feedback skipped.'
-                  setMessages((prev) => [...prev, { sender: 'bot', text: skipMsg }])
-                  saveMessage('bot', skipMsg)
-                }}
-              >
-                Skip
-              </button>
-            </div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </section>
 
@@ -441,15 +387,22 @@ useEffect(() => {
         <button onClick={sendMessage}>➤</button>
       </footer>
 
-      {/* Floating Loan Button */}
+      {/* Loan Form Button */}
       {email && (
-        <button
-          onClick={() => router.push('/loan-form')}
-          className="floating-loan-btn"
-        >
+        <button onClick={() => router.push('/loan-form')} className="floating-loan-btn">
           Apply for a Loan
         </button>
       )}
+
+      {/* Survey Modal */}
+      <SurveyModal
+        open={surveyOpen}
+        onClose={() => setSurveyOpen(false)}
+        onSubmit={submitSurvey}
+        loading={surveySubmitting}
+        defaultVariant={mode}
+        defaultPrediction={pendingSurveyPrediction || 'Unknown'}
+      />
     </main>
   )
 }
