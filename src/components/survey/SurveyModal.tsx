@@ -3,10 +3,11 @@ import { useState } from 'react'
 
 type Scores = {
   trust_score: number | null
+  reasoning_confidence_score: number | null
   accuracy_score: number | null
-  clarity_score: number | null
-  confidence_score: number | null
+  understanding_score: number | null
   repeat_usage_score: number | null
+  comfort_score: number | null
 }
 
 export function SurveyModal({
@@ -26,10 +27,11 @@ export function SurveyModal({
 }) {
   const [scores, setScores] = useState<Scores>({
     trust_score: null,
+    reasoning_confidence_score: null,
     accuracy_score: null,
-    clarity_score: null,
-    confidence_score: null,
+    understanding_score: null,
     repeat_usage_score: null,
+    comfort_score: null,
   })
   const [comment, setComment] = useState('')
 
@@ -48,20 +50,50 @@ export function SurveyModal({
         </div>
 
         <p className="survey-sub">
-          Help us evaluate the {defaultVariant.toUpperCase()} experience. (Prediction: <b>{defaultPrediction}</b>)
+          Help us evaluate the experience.
+          (Prediction: <b>{defaultPrediction}</b>)
         </p>
 
         <div className="survey-group">
-          <SurveyRow label="I trust the answer provided by the AI."
-            value={scores.trust_score} onChange={(v) => setVal('trust_score', v)} />
-          <SurveyRow label="The explanation/prediction felt accurate."
-            value={scores.accuracy_score} onChange={(v) => setVal('accuracy_score', v)} />
-          <SurveyRow label="The answer was clear and easy to understand."
-            value={scores.clarity_score} onChange={(v) => setVal('clarity_score', v)} />
-          <SurveyRow label="I feel confident about the recommendation."
-            value={scores.confidence_score} onChange={(v) => setVal('confidence_score', v)} />
-          <SurveyRow label="I would rely on this AI for similar decisions again."
-            value={scores.repeat_usage_score} onChange={(v) => setVal('repeat_usage_score', v)} />
+
+          {/* --- Updated 6 research-backed questions --- */}
+
+          <SurveyRow
+            label="I trust the loan decision provided by the AI."
+            value={scores.trust_score}
+            onChange={(v) => setVal('trust_score', v)}
+          />
+
+          <SurveyRow
+            label="The AI’s reasoning or explanation increased my confidence in the decision."
+            value={scores.reasoning_confidence_score}
+            onChange={(v) => setVal('reasoning_confidence_score', v)}
+          />
+
+          <SurveyRow
+            label="The AI’s answer felt accurate and reliable."
+            value={scores.accuracy_score}
+            onChange={(v) => setVal('accuracy_score', v)}
+          />
+
+          <SurveyRow
+            label="I understood how the system arrived at the decision."
+            value={scores.understanding_score}
+            onChange={(v) => setVal('understanding_score', v)}
+          />
+
+          <SurveyRow
+            label="I would rely on this AI for similar financial decisions in the future."
+            value={scores.repeat_usage_score}
+            onChange={(v) => setVal('repeat_usage_score', v)}
+          />
+
+          <SurveyRow
+            label="I felt comfortable receiving a financial decision from an AI system."
+            value={scores.comfort_score}
+            onChange={(v) => setVal('comfort_score', v)}
+          />
+
         </div>
 
         <div className="survey-textarea">
@@ -71,15 +103,23 @@ export function SurveyModal({
             rows={3}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Share anything specific that helped or hindered your trust…"
+            placeholder="What increased or reduced your trust in this decision?"
           />
         </div>
 
         <div className="survey-actions">
-          <button className="button secondary" onClick={onClose} disabled={loading}>Later</button>
+          <button className="button secondary" onClick={onClose} disabled={loading}>
+            Later
+          </button>
+
           <button
             className="button"
-            onClick={() => onSubmit({ trust: scores, feedback: comment.trim() || undefined })}
+            onClick={() =>
+              onSubmit({
+                trust: scores,
+                feedback: comment.trim() || undefined,
+              })
+            }
             disabled={!allAnswered || !!loading}
           >
             {loading ? 'Submitting…' : 'Submit'}
@@ -105,7 +145,13 @@ function SurveyRow({
       <div className="survey-scale">
         {[1, 2, 3, 4, 5].map((n) => (
           <label key={n} className={`pill ${value === n ? 'active' : ''}`}>
-            <input type="radio" name={label} value={n} checked={value === n} onChange={() => onChange(n)} />
+            <input
+              type="radio"
+              name={label}
+              value={n}
+              checked={value === n}
+              onChange={() => onChange(n)}
+            />
             {n}
           </label>
         ))}
