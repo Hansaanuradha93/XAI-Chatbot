@@ -880,6 +880,8 @@ export default function LoanFormPage() {
               handleChange={handleChange}
               handleBlur={handleBlur}
               cibilCategory={cibilCategory}
+              inlineErrors={{}}
+            touched={{}}
             />
           )}
 
