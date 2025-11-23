@@ -183,16 +183,17 @@ export default function ChatPage() {
     }
   }, [])
 
-  const submitSurvey = async (payload: {
-    trust: {
-      trust_score: number | null
-      accuracy_score: number | null
-      clarity_score: number | null
-      confidence_score: number | null
-      repeat_usage_score: number | null
-    }
-    feedback?: string
-  }) => {
+const submitSurvey = async (payload: {
+  trust: {
+    trust_score: number | null
+    reasoning_confidence_score: number | null
+    accuracy_score: number | null
+    understanding_score: number | null
+    repeat_usage_score: number | null
+    comfort_score: number | null
+  }
+  feedback?: string
+}) => {
     if (!email || !pendingSurveyPrediction) {
       setSurveyOpen(false)
       return

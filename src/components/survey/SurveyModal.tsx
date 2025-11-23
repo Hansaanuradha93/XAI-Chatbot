@@ -69,19 +69,19 @@ export function SurveyModal({
         <div className="survey-group">
 
           <SurveyRow
-            label="I trust the loan decision provided by the AI."
+            label="I trust the loan decision provided by the chatbot."
             value={scores.trust_score}
             onChange={(v) => setVal('trust_score', v)}
           />
 
           <SurveyRow
-            label="The AI’s reasoning or explanation increased my confidence in the decision."
+            label="The chatbot's reasoning or explanation increased my confidence in the decision."
             value={scores.reasoning_confidence_score}
             onChange={(v) => setVal('reasoning_confidence_score', v)}
           />
 
           <SurveyRow
-            label="The AI’s answer felt accurate and reliable."
+            label="The chatbot's answer felt accurate and reliable."
             value={scores.accuracy_score}
             onChange={(v) => setVal('accuracy_score', v)}
           />
@@ -93,7 +93,7 @@ export function SurveyModal({
           />
 
           <SurveyRow
-            label="I would rely on this AI for similar financial decisions in the future."
+            label="I would rely on this chatbot for similar financial decisions in the future."
             value={scores.repeat_usage_score}
             onChange={(v) => setVal('repeat_usage_score', v)}
           />
