@@ -48,11 +48,27 @@ export default function ChatPage() {
 
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user')
 
-  const toggleMode = () => {
-    const newMode = mode === 'xai' ? 'baseline' : 'xai'
+const toggleMode = async () => {
+  const newMode = mode === 'xai' ? 'baseline' : 'xai'
+
+  try {
+    await apiFetch(`/api/v1/users/mode`, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        mode: newMode
+      })
+    })
+
     setMode(newMode)
     localStorage.setItem('chat_mode', newMode)
+    console.log("✅ Mode updated in Supabase:", newMode)
+
+  } catch (err) {
+    console.error("❌ Failed to update mode:", err)
   }
+}
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -96,31 +112,29 @@ export default function ChatPage() {
     loadChatHistory()
   }, [email])
 
-  // Fetch user A/B mode + role
-  useEffect(() => {
-    const fetchUserMode = async () => {
-      if (!email) return
-      try {
-        const data = await apiFetch(`/api/v1/users/mode`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        })
+ // Fetch user A/B mode + role
+useEffect(() => {
+  const fetchUserMode = async () => {
+    if (!email) return
+    try {
+      const data = await apiFetch(`/api/v1/users/mode?email=${email}`, {
+        method: 'GET'
+      })
 
-        if (data.mode) {
-          setMode(data.mode)
-          localStorage.setItem('chat_mode', data.mode)
-        }
-        if (data.role) {
-          setUserRole(data.role)
-        }
-      } catch (err) {
-        console.error('⚠️ Failed to fetch user mode:', err)
+      if (data.mode) {
+        setMode(data.mode)
+        localStorage.setItem('chat_mode', data.mode)
       }
+      if (data.role) {
+        setUserRole(data.role)
+      }
+    } catch (err) {
+      console.error('⚠️ Failed to fetch user mode:', err)
     }
+  }
 
-    fetchUserMode()
-  }, [email])
+  fetchUserMode()
+}, [email])
 
   // Save message helper
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
