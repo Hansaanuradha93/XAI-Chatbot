@@ -467,7 +467,7 @@ function Step4({
       </div>
 
       <div className="form-field">
-        <Label tip="Cars, jewelry, gold, valuables." required>
+        <Label tip="Jewelry, gold, valuables." required>
           Luxury Assets
         </Label>
         <input
