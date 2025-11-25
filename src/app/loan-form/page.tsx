@@ -793,6 +793,7 @@ export default function LoanFormPage() {
     e.preventDefault()
     setLoading(true)
 
+    console.log('⚡️ Frontend mode: ', mode)
     try {
       const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
         method: 'POST',
