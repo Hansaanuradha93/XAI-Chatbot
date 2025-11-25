@@ -302,6 +302,35 @@ body {
   border-top-right-radius: 2px;
 }
 
+/* ====== NEW: Button area under a bot bubble ====== */
+.bubble-actions {
+  margin-left: 48px;       /* align under bot bubble */
+  margin-top: 4px;
+}
+
+.bubble-actions.bot {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.survey-btn {
+  background: var(--brand);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+}
+
+.survey-btn:hover {
+  background: var(--brand-hover);
+}
+
+.survey-btn:active {
+  transform: translateY(1px);
+}
+
 /* ---------- Input Bar ---------- */
 .input-bar {
   display: flex;

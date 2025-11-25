@@ -814,24 +814,36 @@ export default function LoanFormPage() {
       })
 
       if (email) {
-        await supabase.from('chat_history').insert([
-          {
-            user_email: email,
-            sender: 'user',
-            message: JSON.stringify(form),
-            variant: mode,
-            context: 'loan'
-          },
-          {
-            user_email: email,
-            sender: 'bot',
-            message: data.human_message || data.prediction,
-            variant: mode,
-            context: 'loan',
-            prediction: data.prediction
-          }
-        ])
-      }
+  // 1. Save user request
+  await supabase.from("chat_history").insert({
+    user_email: email,
+    sender: "user",
+    message: JSON.stringify(form),
+    variant: mode,
+    context: "loan"
+  });
+
+  // 2. Save bot response AND return inserted ID
+  const { data: botRow, error: botError } = await supabase
+    .from("chat_history")
+    .insert({
+      user_email: email,
+      sender: "bot",
+      message: data.human_message || data.prediction,
+      variant: mode,
+      context: "loan",
+      prediction: data.prediction,
+      survey_completed: false
+    })
+    .select("id")
+    .single();
+
+  if (botError) {
+    console.error("Bot history insert failed", botError);
+  } else {
+    console.log("Saved bot decision message id:", botRow.id);
+  }
+}
 
       router.push('/chat')
     } catch {
