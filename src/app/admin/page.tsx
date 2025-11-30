@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { ADMIN_EMAILS } from '@/lib/adminConfig'
 import { apiFetch } from '@/lib/apiClient'
