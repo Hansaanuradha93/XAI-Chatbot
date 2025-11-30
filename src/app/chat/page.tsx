@@ -79,7 +79,7 @@ export default function ChatPage() {
 const loadChatHistory = async () => {
   if (!email) return
   try {
-    const data = await apiFetch(`/api/v1/chat/messages?email=${email}`, {
+    const data = await apiFetch(`/api/v1/chat/${email}`, {
       method: 'GET'
     })
 
@@ -127,16 +127,25 @@ useEffect(() => {
     load()
   }, [email])
 
-  /* ---------------- Save Message to Supabase ------------------ */
+  /* ---------------- Save Message to Database ------------------ */
   const saveMessage = async (sender: 'user' | 'bot', text: string) => {
-    if (!email) return
-    await supabase.from('chat_history').insert({
-      user_email: email,
-      sender,
-      message: text,
-      variant: mode
+  if (!email) return
+
+  try {
+    await apiFetch(`/api/v1/chat/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        sender,
+        message: text,
+        variant: mode
+      })
     })
+  } catch (err) {
+    console.error("Failed to save message:", err)
   }
+}
 
   /* ------------------------ SURVEY FLOW ------------------------ */
   const openSurveyFor = (prediction: string, historyId: string) => {
