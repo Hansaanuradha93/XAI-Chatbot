@@ -184,10 +184,11 @@ useEffect(() => {
       })
 
       // Update Supabase row
-      await supabase
-        .from('chat_history')
-        .update({ survey_completed: true })
-        .eq('id', pendingHistoryId)
+      await apiFetch(`/api/v1/chat/${pendingHistoryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ survey_completed: true })
+      })
 
       // Update local state
       setSurveyCompletedMap((prev) => ({
