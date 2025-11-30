@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { ADMIN_EMAILS } from '@/lib/adminConfig'
+import { apiFetch } from '@/lib/apiClient'
 
 // ===== Read CSS variables =====
 function cssVar(name: string) {
@@ -62,21 +63,29 @@ export default function AdminPage() {
     }
   }, [email, loading, router])
 
-  // Fetch survey results
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!email || !ADMIN_EMAILS.includes(email)) return
+// Fetch survey results
+useEffect(() => {
+  const fetchData = async () => {
+    if (!email || !ADMIN_EMAILS.includes(email)) return
 
-      const { data, error } = await supabase
-        .from('loan_trust_survey')
-        .select('*')
-        .order('created_at', { ascending: false })
+    try {
+      const response = await apiFetch(`/api/v1/survey/`, {
+        method: "GET"
+      })
 
-      if (!error && data) setRows(data as SurveyRow[])
+      // Backend returns: { success: true, count: X, surveys: [...] }
+      if (response?.surveys) {
+        setRows(response.surveys as SurveyRow[])
+      }
+    } catch (err) {
+      console.error("❌ Error loading survey results:", err)
+    } finally {
       setLoadingData(false)
     }
-    fetchData()
-  }, [email])
+  }
+
+  fetchData()
+}, [email])
 
   // Helpers
   const byVariant = (v: Variant) => rows.filter(r => r.variant === v)

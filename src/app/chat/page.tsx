@@ -171,7 +171,7 @@ useEffect(() => {
 
     try {
       // Save survey
-      await apiFetch(`/api/v1/survey/loan-trust`, {
+      await apiFetch(`/api/v1/survey/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
