@@ -183,7 +183,7 @@ useEffect(() => {
         })
       })
 
-      // Update Supabase row
+      // Update message
       await apiFetch(`/api/v1/chat/${pendingHistoryId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

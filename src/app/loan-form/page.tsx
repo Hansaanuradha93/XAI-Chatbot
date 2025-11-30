@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
 import { apiFetch } from '@/lib/apiClient'
 
@@ -788,70 +787,81 @@ export default function LoanFormPage() {
     return true
   }
 
-  /* Submit */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    console.log('⚡️ Frontend mode: ', mode)
-    try {
-      const data = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          no_of_dependents: Number(form.no_of_dependents),
-          education: Number(form.education),
-          self_employed: Number(form.self_employed),
-          income_annum: income,
-          loan_amount: loan,
-          loan_term: Number(form.loan_term),
-          cibil_score: Number(form.cibil_score),
-          residential_assets_value: res,
-          commercial_assets_value: com,
-          luxury_assets_value: lux,
-          bank_asset_value: bank
-        })
-      })
-
-      if (email) {
-  // 1. Save user request
-  await supabase.from("chat_history").insert({
-    user_email: email,
-    sender: "user",
-    message: JSON.stringify(form),
-    variant: mode,
-    context: "loan"
-  });
-
-  // 2. Save bot response AND return inserted ID
-  const { data: botRow, error: botError } = await supabase
-    .from("chat_history")
-    .insert({
-      user_email: email,
-      sender: "bot",
-      message: data.human_message || data.prediction,
-      variant: mode,
-      context: "loan",
-      prediction: data.prediction,
-      survey_completed: false
-    })
-    .select("id")
-    .single();
-
-  if (botError) {
-    console.error("Bot history insert failed", botError);
-  } else {
-    console.log("Saved bot decision message id:", botRow.id);
-  }
+  interface LoanPredictionResponse {
+    prediction: string;
+    human_message?: string;
+    explanation?: Record<string, number> | null;
+    probability?: number;
 }
 
-      router.push('/chat')
-    } catch {
-      alert('Error contacting backend.')
-    } finally {
-      setLoading(false)
+/* Submit */
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+
+  console.log("⚡️ Frontend mode:", mode);
+
+  try {
+    // 1. Send loan request to backend
+    const result = await apiFetch(`/api/v1/loan/approval?variant=${mode}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        no_of_dependents: Number(form.no_of_dependents),
+        education: Number(form.education),
+        self_employed: Number(form.self_employed),
+        income_annum: income,
+        loan_amount: loan,
+        loan_term: Number(form.loan_term),
+        cibil_score: Number(form.cibil_score),
+        residential_assets_value: res,
+        commercial_assets_value: com,
+        luxury_assets_value: lux,
+        bank_asset_value: bank,
+      }),
+    });
+
+    if (email) {
+      // 2. Save USER message (loan form data)
+      await apiFetch(`/api/v1/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          sender: "user",
+          message: JSON.stringify(form),
+          variant: mode,
+          context: "loan",
+          prediction: null,
+          survey_completed: false
+        }),
+      });
+
+      // 3. Save BOT message (loan decision)
+      await apiFetch(`/api/v1/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          sender: "bot",
+          message: result.human_message || result.prediction,
+          variant: mode,
+          context: "loan",
+          prediction: result.prediction,
+          survey_completed: false
+        }),
+      });
     }
+
+    // 4. Redirect back to chat
+    router.push("/chat");
+  } catch (err) {
+    console.error("❌ Loan submission error:", err);
+    alert("Error contacting backend.");
+  } finally {
+    setLoading(false);
   }
+};
 
   /* RENDER */
   return (
