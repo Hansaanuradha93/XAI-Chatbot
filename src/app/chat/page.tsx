@@ -75,39 +75,39 @@ export default function ChatPage() {
   }, [messages, thinking])
 
   /* --------------------- Load Chat History --------------------- */
-  useEffect(() => {
-    if (!email) return
 
-    const load = async () => {
-      const { data, error } = await supabase
-        .from('chat_history')
-        .select('id, sender, message, context, prediction, survey_completed')
-        .eq('user_email', email)
-        .order('timestamp', { ascending: true })
+const loadChatHistory = async () => {
+  if (!email) return
+  try {
+    const data = await apiFetch(`/api/v1/chat/messages?email=${email}`, {
+      method: 'GET'
+    })
 
-      if (error) return console.error(error)
+    const mapped = data.map((m) => ({
+      id: m.id,
+      sender: m.sender,
+      text: m.message,
+      context: m.context,
+      prediction: m.prediction,
+      survey_completed: m.survey_completed
+    }))
 
-      const mapped = data.map((m) => ({
-        id: m.id,
-        sender: m.sender,
-        text: m.message,
-        context: m.context,
-        prediction: m.prediction,
-        survey_completed: m.survey_completed
-      }))
+    // build local survey state
+    const map: Record<string, boolean> = {}
+    mapped.forEach((m) => {
+      if (m.survey_completed) map[m.id] = true
+    })
 
-      // build local survey state
-      const map: Record<string, boolean> = {}
-      mapped.forEach((m) => {
-        if (m.survey_completed) map[m.id] = true
-      })
-
-      setSurveyCompletedMap(map)
-      setMessages(mapped)
-    }
-
-    load()
-  }, [email])
+    setSurveyCompletedMap(map)
+    setMessages(mapped)
+  } catch (err) {
+    console.error("Failed to load chat history:", err)
+  }
+}
+useEffect(() => {
+  if (!email) return
+  loadChatHistory()
+}, [email])
 
   /* --------------------- Fetch User Mode/Role ------------------ */
   useEffect(() => {
