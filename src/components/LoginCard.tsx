@@ -1,70 +1,69 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { apiFetch } from '@/lib/apiClient'   // ✅ make sure this exists
+import { apiFetch } from '@/lib/apiClient'
 
 export default function LoginCard() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [registered, setRegistered] = useState(false) // ✅ prevent double calls
 
-  // -----------------------------
-  // 1️⃣ After login, register user
-  // -----------------------------
+  // Prevent double registration + double redirect
+  const hasRegistered = useRef(false)
+
+  // 🔥 Register user in backend before redirecting
   const registerUser = async (userEmail: string) => {
     try {
-      const response = await apiFetch("/api/v1/users", {
+      const res = await apiFetch("/api/v1/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail })
       })
-
-      console.log("✅ User registered/loaded:", response)
+      console.log("✅ User ensured in DB:", res)
     } catch (err) {
       console.error("❌ Failed to register user:", err)
     }
   }
 
-  // -----------------------------
-  // 2️⃣ Initialize session listener
-  // -----------------------------
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getSession()
-      const userEmail = data.session?.user?.email ?? null
+      const sessEmail = data.session?.user?.email ?? null
 
-      if (userEmail) setEmail(userEmail)
+      if (sessEmail) setEmail(sessEmail)
       setLoading(false)
     }
-
     init()
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const userEmail = session?.user?.email ?? null
-      if (!userEmail) return
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        const userEmail = session?.user?.email ?? null
+        if (!userEmail) return
 
-      setEmail(userEmail)
+        setEmail(userEmail)
 
-      // 🔥 Register user ONLY once
-      if (!registered) {
-        setRegistered(true)
-        await registerUser(userEmail)
+        if (!hasRegistered.current) {
+          hasRegistered.current = true
+
+          console.log("🔥 Creating/Ensuring user in backend before redirect...")
+
+          await registerUser(userEmail)   // wait fully
+          console.log("🔥 Redirecting to chat...")
+          router.replace("/chat")         // redirect AFTER user is created
+        }
       }
-
-      router.replace('/chat')
-    })
+    )
 
     return () => {
       sub.subscription.unsubscribe()
     }
-  }, [router, registered])
+  }, [])
 
   // -----------------------------
-  // 3️⃣ Google Login / Logout
+  // Google Login / Logout
   // -----------------------------
   const login = async () => {
     await supabase.auth.signInWithOAuth({
@@ -79,7 +78,7 @@ export default function LoginCard() {
   }
 
   // -----------------------------
-  // 4️⃣ UI States
+  // UI
   // -----------------------------
   if (loading) {
     return <div className="card"><div>Loading…</div></div>
