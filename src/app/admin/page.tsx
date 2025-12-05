@@ -64,7 +64,7 @@ export default function AdminPage() {
 
 // Fetch survey results
 useEffect(() => {
-  const fetchData = async () => {
+  const fetchSurveyData = async () => {
     if (!email || !ADMIN_EMAILS.includes(email)) return
 
     try {
@@ -83,7 +83,7 @@ useEffect(() => {
     }
   }
 
-  fetchData()
+  fetchSurveyData()
 }, [email])
 
   // Helpers

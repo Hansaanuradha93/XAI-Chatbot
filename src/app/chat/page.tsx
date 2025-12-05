@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useSession } from '@/hooks/useSession'
@@ -11,6 +11,15 @@ interface Message {
   id: string
   sender: 'user' | 'bot'
   text: string
+  context?: string | null
+  prediction?: string | null
+  survey_completed?: boolean
+}
+
+type ChatHistoryItem = {
+  id: string
+  sender: 'user' | 'bot'
+  message: string
   context?: string | null
   prediction?: string | null
   survey_completed?: boolean
@@ -76,44 +85,45 @@ export default function ChatPage() {
 
   /* --------------------- Load Chat History --------------------- */
 
-const loadChatHistory = async () => {
-  if (!email) return
-  try {
-    const data = await apiFetch(`/api/v1/chat/${email}`, {
-      method: 'GET'
-    })
+  /* --------------------- Load Chat History --------------------- */
+  const loadChatHistory = useCallback(async () => {
+    if (!email) return
+    try {
+      // strongly type the response
+      const data = await apiFetch<ChatHistoryItem[]>(`/api/v1/chat/${email}`, { method: 'GET' })
 
-    const mapped = data.map((m) => ({
-      id: m.id,
-      sender: m.sender,
-      text: m.message,
-      context: m.context,
-      prediction: m.prediction,
-      survey_completed: m.survey_completed
-    }))
+      const mapped: Message[] = data.map((m: ChatHistoryItem) => ({
+        id: m.id,
+        sender: m.sender,
+        text: m.message,
+        context: m.context ?? null,
+        prediction: m.prediction ?? null,
+        survey_completed: m.survey_completed ?? false
+      }))
 
-    // build local survey state
-    const map: Record<string, boolean> = {}
-    mapped.forEach((m) => {
-      if (m.survey_completed) map[m.id] = true
-    })
+      // build local survey state
+      const map: Record<string, boolean> = {}
+      mapped.forEach((m) => {
+        if (m.survey_completed) map[m.id] = true
+      })
 
-    setSurveyCompletedMap(map)
-    setMessages(mapped)
-  } catch (err) {
-    console.error("Failed to load chat history:", err)
-  }
-}
-useEffect(() => {
-  if (!email) return
-  loadChatHistory()
-}, [email])
+      setSurveyCompletedMap(map)
+      setMessages(mapped)
+    } catch (err) {
+      console.error('Failed to load chat history:', err)
+    }
+  }, [email])
+
+  useEffect(() => {
+    if (!email) return
+    loadChatHistory()
+  }, [email, loadChatHistory])
 
   /* --------------------- Fetch User Mode/Role ------------------ */
   useEffect(() => {
     if (!email) return
 
-    const load = async () => {
+    const fetchUserMode = async () => {
       try {
         const data = await apiFetch(`/api/v1/users/mode?email=${email}`, { method: 'GET' })
         if (data.mode) {
@@ -124,7 +134,7 @@ useEffect(() => {
       } catch {}
     }
 
-    load()
+    fetchUserMode()
   }, [email])
 
   /* ---------------- Save Message to Database ------------------ */
@@ -208,7 +218,7 @@ useEffect(() => {
   }
 
   /* --------------------- SEND FAQ MESSAGE --------------------- */
-  const sendMessage = async () => {
+  const sendFAQMessage = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
@@ -300,7 +310,6 @@ useEffect(() => {
         {messages.map((msg, i) => {
   const isBot = msg.sender === 'bot'
 
-  // 🔥 ADD THIS HERE — EXACT POSITION 🔥
   const isDetailed =
     msg.text.includes('**Decision Outcome') ||
     msg.text.includes('**Main Financial Factors') ||
@@ -314,7 +323,6 @@ useEffect(() => {
         .replace(/- /g, '• ')
         .replace(/\n/g, '<br/>')
     : msg.text
-  // 🔥 STOP PASTING HERE 🔥
 
   const showSurveyButton =
     isBot &&
@@ -361,9 +369,9 @@ useEffect(() => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question..."
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => e.key === 'Enter' && sendFAQMessage()}
         />
-        <button onClick={sendMessage}>➤</button>
+        <button onClick={sendFAQMessage}>➤</button>
       </footer>
 
       {/* LOAN FORM FLOATING BUTTON */}

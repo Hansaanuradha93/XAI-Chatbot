@@ -666,7 +666,7 @@ export default function LoanFormPage() {
     self_employed: '',
     income_annum: '',
     loan_amount: '',
-    loan_term: 6,
+    loan_term: '',
     cibil_score: 600,
     residential_assets_value: '',
     commercial_assets_value: '',
@@ -786,13 +786,6 @@ export default function LoanFormPage() {
     }
     return true
   }
-
-  interface LoanPredictionResponse {
-    prediction: string;
-    human_message?: string;
-    explanation?: Record<string, number> | null;
-    probability?: number;
-}
 
 /* Submit */
 const handleSubmit = async (e: React.FormEvent) => {
