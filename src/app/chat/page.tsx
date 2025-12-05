@@ -90,7 +90,7 @@ export default function ChatPage() {
     if (!email) return
     try {
       // strongly type the response
-      const data = await apiFetch<ChatHistoryItem[]>(`/api/v1/chat/${email}`, { method: 'GET' })
+      const data = (await apiFetch(`/api/v1/chat/${email}`, { method: 'GET' })) as ChatHistoryItem[]
 
       const mapped: Message[] = data.map((m: ChatHistoryItem) => ({
         id: m.id,
