@@ -239,10 +239,9 @@ useEffect(() => {
   return (
     <main className="admin-container">
       <header className="chat-header" style={{ position:'sticky', top:0 }}>
-        <h2>📊 Trust & XAI Evaluation Dashboard</h2>
+        <h2>Dashboard</h2>
         <div style={{ display:'flex', gap:'10px' }}>
           <button className="button secondary" onClick={() => router.push('/chat')}>Back</button>
-          <button className="button" onClick={downloadCSV}>Download CSV</button>
         </div>
       </header>
 
