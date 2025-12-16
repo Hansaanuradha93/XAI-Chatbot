@@ -10,21 +10,19 @@ export default function LoginCard() {
   const router = useRouter()
   const [email, setEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-
-  // Prevent double registration + double redirect
   const hasRegistered = useRef(false)
 
-  // 🔥 Register user in backend before redirecting
+  // ✅ Register user in backend before redirecting
   const registerUser = async (userEmail: string) => {
     try {
-      const res = await apiFetch("/api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail })
+      const res = await apiFetch('/api/v1/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
       })
-      console.log("✅ User ensured in DB:", res)
+      console.log('✅ User ensured in DB:', res)
     } catch (err) {
-      console.error("❌ Failed to register user:", err)
+      console.error('❌ Failed to register user:', err)
     }
   }
 
@@ -32,43 +30,48 @@ export default function LoginCard() {
     const init = async () => {
       const { data } = await supabase.auth.getSession()
       const sessEmail = data.session?.user?.email ?? null
-
       if (sessEmail) setEmail(sessEmail)
       setLoading(false)
     }
     init()
 
-    const { data: sub } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const userEmail = session?.user?.email ?? null
-        if (!userEmail) return
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const userEmail = session?.user?.email ?? null
+      if (!userEmail) return
 
-        setEmail(userEmail)
+      setEmail(userEmail)
 
-        if (!hasRegistered.current) {
-          hasRegistered.current = true
-
-          console.log("🔥 Creating/Ensuring user in backend before redirect...")
-
-          await registerUser(userEmail)   // wait fully
-          console.log("🔥 Redirecting to chat...")
-          router.replace("/chat")         // redirect AFTER user is created
-        }
+      if (!hasRegistered.current) {
+        hasRegistered.current = true
+        console.log('🔥 Creating/Ensuring user in backend before redirect...')
+        await registerUser(userEmail)
+        console.log('🔥 Redirecting to chat...')
+        router.replace('/chat')
       }
-    )
+    })
 
     return () => {
       sub.subscription.unsubscribe()
     }
-  }, [])
+  }, [router])
 
   // -----------------------------
-  // Google Login / Logout
+  // OAuth Logins
   // -----------------------------
-  const login = async () => {
+  const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: process.env.NEXT_PUBLIC_SITE_URL }
+      options: { redirectTo: process.env.NEXT_PUBLIC_SITE_URL },
+    })
+  }
+
+  const loginWithApple = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: process.env.NEXT_PUBLIC_SITE_URL,
+        scopes: 'name email',
+      },
     })
   }
 
@@ -81,14 +84,22 @@ export default function LoginCard() {
   // UI
   // -----------------------------
   if (loading) {
-    return <div className="card"><div>Loading…</div></div>
+    return (
+      <div className="card">
+        <div>Loading…</div>
+      </div>
+    )
   }
 
   if (email) {
     return (
       <div className="card">
-        <h2 className="brand" style={{ marginBottom: '0.8rem' }}>TrustAI Portal</h2>
-        <p style={{ color: '#555', margin: 0 }}>Signed in as <strong>{email}</strong></p>
+        <h2 className="brand" style={{ marginBottom: '0.8rem' }}>
+          TrustAI Portal
+        </h2>
+        <p style={{ color: '#555', margin: 0 }}>
+          Signed in as <strong>{email}</strong>
+        </p>
         <button
           onClick={logout}
           style={{
@@ -98,7 +109,7 @@ export default function LoginCard() {
             border: 'none',
             borderRadius: 8,
             padding: '10px 16px',
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           Sign out
@@ -110,7 +121,9 @@ export default function LoginCard() {
   return (
     <div className="card">
       <div className="brand">TrustAI Portal</div>
-      <button className="googleBtn" onClick={login}>
+
+      {/* Google Login */}
+      <button className="socialLoginBtn" onClick={loginWithGoogle}>
         <Image
           className="googleLogo"
           src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -120,7 +133,22 @@ export default function LoginCard() {
         />
         Continue with Google
       </button>
-      <div className="footer">© 2025 MSc Research — Improving Trust in AI Chatbots</div>
+
+      {/* Apple Login (same style as Google) */}
+      <button className="socialLoginBtn" onClick={loginWithApple}>
+        <Image
+          className="googleLogo"
+          src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
+          alt="Apple"
+          width={20}
+          height={20}
+        />
+        Continue with Apple
+      </button>
+
+      <div className="footer">
+        © 2025 MSc Research — Improving Trust in AI Chatbots
+      </div>
     </div>
   )
 }

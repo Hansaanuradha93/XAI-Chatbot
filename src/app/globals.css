@@ -55,7 +55,7 @@ body {
 }
 
 /* ---------- Google Button ---------- */
-.googleBtn {
+.socialLoginBtn {
   position: relative;
   display: flex;
   align-items: center;
@@ -72,9 +72,10 @@ body {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: background 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
+  margin-bottom: 12px;
 }
 
-.googleBtn:hover {
+.socialLoginBtn:hover {
   background: #f9faf9;
   border-color: var(--brand);
 }
