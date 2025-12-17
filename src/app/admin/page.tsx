@@ -62,48 +62,67 @@ export default function AdminPage() {
     }
   }, [email, loading, router])
 
-// Fetch survey results
-useEffect(() => {
-  const fetchSurveyData = async () => {
-    if (!email || !ADMIN_EMAILS.includes(email)) return
+  // Fetch survey results
+  useEffect(() => {
+    const fetchSurveyData = async () => {
+      if (!email || !ADMIN_EMAILS.includes(email)) return
 
-    try {
-      const response = await apiFetch(`/api/v1/survey/`, {
-        method: "GET"
-      })
+      try {
+        const response = await apiFetch(`/api/v1/survey/`, {
+          method: "GET"
+        })
 
-      // Backend returns: { success: true, count: X, surveys: [...] }
-      if (response?.surveys) {
-        setRows(response.surveys as SurveyRow[])
+        if (response?.surveys) {
+          setRows(response.surveys as SurveyRow[])
+        }
+      } catch (err) {
+        console.error("❌ Error loading survey results:", err)
+      } finally {
+        setLoadingData(false)
       }
-    } catch (err) {
-      console.error("❌ Error loading survey results:", err)
-    } finally {
-      setLoadingData(false)
     }
-  }
 
-  fetchSurveyData()
-}, [email])
+    fetchSurveyData()
+  }, [email])
 
-  // Helpers
+  // ===== Helpers =====
   const byVariant = (v: Variant) => rows.filter(r => r.variant === v)
-  const mean = (list: number[]) => list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0
+  const mean = (list: number[]) =>
+    list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0
+
   const uniqUsers = new Set(rows.map(r => r.user_email)).size
 
   const total = rows.length
   const baselineN = byVariant('baseline').length
   const xaiN = byVariant('xai').length
 
-  // SECTION 2: Mean Trust
-  const baselineTrust = mean(byVariant('baseline').map(r => r.trust_score))
-  const xaiTrust = mean(byVariant('xai').map(r => r.trust_score))
+  // =====================================================
+  // SECTION 2: Mean Trust Index (UPDATED — ONLY CHANGE)
+  // =====================================================
+
+  const trustIndex = (r: SurveyRow) =>
+    mean([
+      r.trust_score,
+      r.reasoning_confidence_score,
+      r.accuracy_score,
+      r.understanding_score,
+      r.repeat_usage_score,
+      r.comfort_score,
+    ])
+
+  const baselineTrust = mean(
+    byVariant('baseline').map(r => trustIndex(r))
+  )
+
+  const xaiTrust = mean(
+    byVariant('xai').map(r => trustIndex(r))
+  )
 
   const meanTrustData = {
     labels: ['BASELINE', 'XAI'],
     datasets: [
       {
-        label: 'Avg Trust',
+        label: 'Avg Trust Index',
         data: [baselineTrust, xaiTrust],
         backgroundColor: [MUTED, BRAND],
         borderColor: BORDER,
@@ -155,7 +174,7 @@ useEffect(() => {
 
   const dimsOptions = meanTrustOptions
 
-  // SECTION 4: Distribution
+  // ===== SECTION 4: Distribution (UNCHANGED) =====
   const buckets = [1,2,3,4,5]
   const baselineDist = buckets.map(b => byVariant('baseline').filter(r => r.trust_score === b).length)
   const xaiDist = buckets.map(b => byVariant('xai').filter(r => r.trust_score === b).length)
@@ -176,7 +195,7 @@ useEffect(() => {
     plugins: { legend: { labels: { color: TEXT } } },
   }
 
-  // SECTION 5: Word Cloud
+  // ===== SECTION 5: Word Cloud (UNCHANGED) =====
   const topWords = useMemo(() => {
     const freq: Record<string, number> = {}
     const stop = new Set(['the','and','for','with','from','that','this','your','have','was',
@@ -192,7 +211,7 @@ useEffect(() => {
     })
 
     const entries = Object.entries(freq)
-      .sort((a: [string,number], b: [string,number]) => b[1] - a[1])
+      .sort((a, b) => b[1] - a[1])
       .slice(0, 40)
 
     const max = entries[0]?.[1] ?? 1
@@ -204,33 +223,7 @@ useEffect(() => {
     }))
   }, [rows])
 
-  // CSV Export — fixed type
-  const downloadCSV = () => {
-    const header = [
-      'id','created_at','user_email','variant','prediction',
-      'trust_score','reasoning_confidence_score','accuracy_score',
-      'understanding_score','repeat_usage_score','comfort_score','comment'
-    ]
-
-    const csv = [
-      header.join(','),
-      ...rows.map(r =>
-        header
-          .map(h => JSON.stringify((r as Record<string,string|number|null>)[h] ?? ""))
-          .join(',')
-      )
-    ].join('\n')
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "survey_export.csv"
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  // UI Conditions
+  // ===== UI Conditions =====
   if (loading) return <div className="page-center"><div className="card">Checking permissions…</div></div>
   if (!email || !ADMIN_EMAILS.includes(email)) return <div className="page-center"><div className="card">Access denied</div></div>
   if (loadingData) return <div className="page-center"><div className="card">Fetching analytics…</div></div>
@@ -245,9 +238,8 @@ useEffect(() => {
         </div>
       </header>
 
-      {/* SECTION 1 */}
       <section className="admin-section">
-        <h3 className="admin-section-title">Section 1 — Sample Overview</h3>
+        <h3 className="admin-section-title">Section 1 - Sample Overview</h3>
         <div className="stats-grid">
           {[["Total Responses", total],["Unique Users", uniqUsers],["Baseline", baselineN],["XAI", xaiN]].map(([label,value]) => (
             <div className="stat-card" key={label}>
@@ -258,27 +250,25 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* SECTION 2 */}
       <section className="admin-section">
-        <h3 className="admin-section-title">Section 2 — Mean Trust</h3>
-        <div className="chart-card"><Bar data={meanTrustData} options={meanTrustOptions} /></div>
+        <h3 className="admin-section-title">Section 2 - Average Trust Index</h3>
+        <div className="chart-card">
+          <Bar data={meanTrustData} options={meanTrustOptions} />
+        </div>
       </section>
 
-      {/* SECTION 3 */}
       <section className="admin-section">
-        <h3 className="admin-section-title">Section 3 — Six Trust Dimensions</h3>
+        <h3 className="admin-section-title">Section 3 - Six Trust Dimensions</h3>
         <div className="chart-card"><Bar data={dimsData} options={dimsOptions} /></div>
       </section>
 
-      {/* SECTION 4 */}
       <section className="admin-section">
-        <h3 className="admin-section-title">Section 4 — Distribution (1–5)</h3>
+        <h3 className="admin-section-title">Section 4 - Distribution (1–5)</h3>
         <div className="chart-card"><Bar data={distData} options={distOptions} /></div>
       </section>
 
-      {/* SECTION 5 */}
       <section className="admin-section">
-        <h3 className="admin-section-title">Section 5 — Word Cloud</h3>
+        <h3 className="admin-section-title">Section 5 - Word Cloud</h3>
         {topWords.length ? (
           <div className="word-cloud">
             {topWords.map((w,i) => (
