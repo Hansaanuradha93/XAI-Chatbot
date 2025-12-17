@@ -287,7 +287,8 @@ export default function ChatPage() {
           </div>
 
           <div className={`dropdown-menu ${menuOpen ? 'open' : ''}`}>
-            {userRole === 'admin' && <button onClick={toggleMode}>Toggle Mode</button>}
+            <button onClick={toggleMode}>Toggle Mode</button>
+            {/* {userRole === 'admin' && <button onClick={toggleMode}>Toggle Mode</button>} */}
             {userRole === 'admin' && <button onClick={() => router.push('/admin')}>Admin Panel</button>}
             <button onClick={() => router.push('/privacy-policy')}>Privacy Policy</button>
             <button onClick={signOut}>Sign Out</button>
