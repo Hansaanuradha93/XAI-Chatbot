@@ -2,7 +2,6 @@
 
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { Bar } from 'react-chartjs-2'
-import type { Align, Anchor } from 'chartjs-plugin-datalabels'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from '@/hooks/useSession'
@@ -148,8 +147,8 @@ export default function AdminPage() {
       legend: { labels: { color: TEXT } },
       datalabels: {
         color: TEXT,
-        anchor: 'end' as Anchor,
-        align: 'top' as Align,
+        anchor: 'end' as const,
+        align: 'top' as const,
         font: { weight: 'regular', size: 12 },
         formatter: (value: number) => value.toFixed(2),
       },
