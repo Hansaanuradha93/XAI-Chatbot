@@ -149,7 +149,7 @@ export default function AdminPage() {
         color: TEXT,
         anchor: 'end' as const,
         align: 'top' as const,
-        font: { weight: 'regular', size: 12 },
+        font: { weight: 'normal', size: 12 },
         formatter: (value: number) => value.toFixed(2),
       },
     },
