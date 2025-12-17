@@ -27,8 +27,18 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
+import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { Bar } from 'react-chartjs-2'
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+)
 
 // ===== Types =====
 type Variant = 'baseline' | 'xai'
@@ -91,15 +101,11 @@ export default function AdminPage() {
     list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0
 
   const uniqUsers = new Set(rows.map(r => r.user_email)).size
-
   const total = rows.length
   const baselineN = byVariant('baseline').length
   const xaiN = byVariant('xai').length
 
-  // =====================================================
-  // SECTION 2: Mean Trust Index (UPDATED — ONLY CHANGE)
-  // =====================================================
-
+  // ===== SECTION 2: Mean Trust Index =====
   const trustIndex = (r: SurveyRow) =>
     mean([
       r.trust_score,
@@ -136,9 +142,17 @@ export default function AdminPage() {
       x: { ticks: { color: TEXT }, grid: { color: BORDER } },
       y: { min: 0, max: 5, ticks: { color: TEXT, stepSize: 1 }, grid: { color: BORDER } },
     },
-    plugins: { legend: { labels: { color: TEXT } } },
+    plugins: {
+      legend: { labels: { color: TEXT } },
+      datalabels: {
+        color: TEXT,
+        anchor: 'end',
+        align: 'top',
+        font: { weight: 'regular', size: 12 },
+        formatter: (value: number) => value.toFixed(2),
+      },
+    },
   }
-
   // SECTION 3: Dimensions
   const dims = [
     { key: 'trust_score', label: 'Trust' },
