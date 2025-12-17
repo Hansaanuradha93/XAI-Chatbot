@@ -1,5 +1,8 @@
 'use client'
 
+import ChartDataLabels from 'chartjs-plugin-datalabels'
+import { Bar } from 'react-chartjs-2'
+import type { Align, Anchor } from 'chartjs-plugin-datalabels'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from '@/hooks/useSession'
@@ -27,8 +30,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
-import ChartDataLabels from 'chartjs-plugin-datalabels'
-import { Bar } from 'react-chartjs-2'
+
 
 ChartJS.register(
   CategoryScale,
@@ -146,8 +148,8 @@ export default function AdminPage() {
       legend: { labels: { color: TEXT } },
       datalabels: {
         color: TEXT,
-        anchor: 'end',
-        align: 'top',
+        anchor: 'end' as Anchor,
+        align: 'top' as Align,
         font: { weight: 'regular', size: 12 },
         formatter: (value: number) => value.toFixed(2),
       },
