@@ -134,18 +134,6 @@ export default function LoginCard() {
         Continue with Google
       </button>
 
-      {/* Apple Login (same style as Google) */}
-      <button className="socialLoginBtn" onClick={loginWithApple}>
-        <Image
-          className="googleLogo"
-          src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
-          alt="Apple"
-          width={20}
-          height={20}
-        />
-        Continue with Apple
-      </button>
-
       <div className="footer">
         © 2025 MSc Research — Improving Trust in AI Chatbots
       </div>
